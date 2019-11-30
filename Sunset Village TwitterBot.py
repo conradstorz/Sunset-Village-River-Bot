@@ -21,6 +21,7 @@ from TwitterCredentials import OAUTH_TOKEN_SECRET
 
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 MAXIMUM_TWEETS_PER_HOUR = 1
+MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR # in seconds
 
 TWEET_GLOBALS = { #TODO make this a list of times and have tweet function limit number of tweets per hour
                     #TODO also... make the frequency go up when flooding is significant. Use the action levels of McAlpine dam as indicators of needed frequency
@@ -29,13 +30,15 @@ TWEET_GLOBALS = { #TODO make this a list of times and have tweet function limit 
     "MorningTweet": False,  # has morning tweet occured
     "EveningTweetTime": 18, #hour
     "EveningTweet": False,
-    "SleepInterval": 1200,  # 15 minutes
+    "SleepInterval": 1200,  # 20 minutes
 }
 
 
 def UpdatePrediction(twtr):
     x = get_level() #retrieve river level readings
     sp = safeprint(x) #use pprint to serialize a version of the result
+    # TODO Check for valid tweet time by limit of number of tweets per hour.
+    # TODO Use a file stored on this server to track last time tweet was sent.
     print("Tweeting...")
     twtr.update_status(status=sp)
     print("Tweet sent.")
@@ -43,7 +46,7 @@ def UpdatePrediction(twtr):
     for item in x:
         print(item)
     print("Length of string = ", len(safeprint(x)))
-    return
+    return # TODO Return the number of seconds before next available tweet window
 
 
 def Main(credentials, params):
