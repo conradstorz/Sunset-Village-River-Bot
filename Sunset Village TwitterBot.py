@@ -41,18 +41,23 @@ TWEET_GLOBALS = { #TODO make this a list of times and have tweet function limit 
 }
 
 
-def UpdatePrediction(twtr, tm):
+def UpdatePrediction(twtr, tm, db):
+    """ twtr = twython object
+    tm = datetime obj
+    db = PupDB obj
+    Returns the time to wait until next tweet
+    """
     waitTime = 0
     x = get_level() #retrieve river level readings
     sp = saferepr(x) #use pprint to serialize a version of the result
-    # TODO Check for valid tweet time by limit of number of tweets per hour.
-    MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey) # recover string repr of datetime obj
+
+    MOST_RECENT_TWEET = db.get(PupDB_MRTkey) # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET) # convert back to datetime
     # check tm against minimum tweet time
     elapsed = tm - prevTweet # returns a timedelta object
     if elapsed.seconds >= MINIMUM_TIME_BETWEEN_TWEETS:
         print("Tweeting...")
-        storage_db.set(PupDB_MRTkey, tm)
+        db.set(PupDB_MRTkey, tm)
         twtr.update_status(status=sp)
         print("Tweet sent.")
         # print('results = ',sp)
@@ -62,7 +67,7 @@ def UpdatePrediction(twtr, tm):
     else:
         print('Too soon to tweet.')
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
-        print('Reccomend waiting', waitTime, 'seconds.')
+        print('Recommend waiting', waitTime, 'seconds.')
     return waitTime
 
 
@@ -75,13 +80,14 @@ def Main(credentials, params):
     twitter = Twython(a, b, c, d)
 
     # activate PupDB file for persistent storage
-    strTimeNow = str(datetime.now())
+    TimeNow = datetime.now()
     storage_db = PupDB(PupDB_FILENAME)
     MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
     if MOST_RECENT_TWEET == None: # Pre-load empty database
-        storage_db.set(PupDB_MRTkey, strTimeNow)
+        storage_db.set(PupDB_MRTkey, str(TimeNow))
 
     while True:
+        """
         strTimeNow = str(datetime.now())
 
         TimeNow = time.localtime(time.time()).tm_hour
@@ -100,7 +106,9 @@ def Main(credentials, params):
                 UpdatePrediction(twitter, strTimeNow)
 
         print("Time to sleep", params["SleepInterval"], "seconds")
-        time.sleep(params["SleepInterval"])
+        """
+        wait = UpdatePrediction(twitter, TimeNow, storage_db)
+        time.sleep(wait) # delay until next tweet
     return
 """
  pseudo code notes:
