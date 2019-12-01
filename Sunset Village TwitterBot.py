@@ -6,19 +6,26 @@ NWS website data for the river level both upstream and downstream then calculati
 to get the calculated level at our property. 
 """
 
-from twython import Twython, TwythonError
+
 import time
 from datetime import datetime, timezone
+from datetime import timedelta
+from dateutil import parser
+
 import sys
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
-from pprint import saferepr as safeprint
+from pprint import saferepr
 from pprint import pprint
 
+from pupdb.core import PupDB
+PupDB_FILENAME = 'SVTB-DB.json_db'
+PupDB_MRTkey = 'M_R_Tweet'
+
+from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
 from TwitterCredentials import APP_SECRET
 from TwitterCredentials import OAUTH_TOKEN
 from TwitterCredentials import OAUTH_TOKEN_SECRET
-
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 MAXIMUM_TWEETS_PER_HOUR = 1
 MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR # in seconds
@@ -34,19 +41,29 @@ TWEET_GLOBALS = { #TODO make this a list of times and have tweet function limit 
 }
 
 
-def UpdatePrediction(twtr):
+def UpdatePrediction(twtr, tm):
+    waitTime = 0
     x = get_level() #retrieve river level readings
-    sp = safeprint(x) #use pprint to serialize a version of the result
+    sp = saferepr(x) #use pprint to serialize a version of the result
     # TODO Check for valid tweet time by limit of number of tweets per hour.
-    # TODO Use a file stored on this server to track last time tweet was sent.
-    print("Tweeting...")
-    twtr.update_status(status=sp)
-    print("Tweet sent.")
-    # print('results = ',sp)
-    for item in x:
-        print(item)
-    print("Length of string = ", len(safeprint(x)))
-    return # TODO Return the number of seconds before next available tweet window
+    MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey) # recover string repr of datetime obj
+    prevTweet = parser.parse(MOST_RECENT_TWEET) # convert back to datetime
+    # check tm against minimum tweet time
+    elapsed = tm - prevTweet # returns a timedelta object
+    if elapsed.seconds >= MINIMUM_TIME_BETWEEN_TWEETS:
+        print("Tweeting...")
+        storage_db.set(PupDB_MRTkey, tm)
+        twtr.update_status(status=sp)
+        print("Tweet sent.")
+        # print('results = ',sp)
+        for item in x:
+            print(item)
+        print("Length of string = ", len(saferepr(x)))
+    else:
+        print('Too soon to tweet.')
+        waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
+        print('Reccomend waiting', waitTime, 'seconds.')
+    return waitTime
 
 
 def Main(credentials, params):
@@ -57,27 +74,36 @@ def Main(credentials, params):
     # establish the twitter access object
     twitter = Twython(a, b, c, d)
 
-    while True:
-        TimeNow = time.localtime(time.time()).tm_hour
+    # activate PupDB file for persistent storage
+    strTimeNow = str(datetime.now())
+    storage_db = PupDB(PupDB_FILENAME)
+    MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
+    if MOST_RECENT_TWEET == None: # Pre-load empty database
+        storage_db.set(PupDB_MRTkey, strTimeNow)
 
-        print("Checking time...", datetime.now().strftime("%m/%d/%Y, %H:%M"))
+    while True:
+        strTimeNow = str(datetime.now())
+
+        TimeNow = time.localtime(time.time()).tm_hour
+        print("Checking time...", strTimeNow)
 
         if params["MorningTweet"] != True:
             if TimeNow == params["MorningTweetTime"]:
                 params["MorningTweet"] = True
                 params["EveningTweet"] = False
-                UpdatePrediction(twitter)
+                UpdatePrediction(twitter, strTimeNow)
 
         if params["EveningTweet"] != True:
             if TimeNow == params["EveningTweetTime"]:
                 params["EveningTweet"] = True
                 params["MorningTweet"] = False
-                UpdatePrediction(twitter)
+                UpdatePrediction(twitter, strTimeNow)
 
         print("Time to sleep", params["SleepInterval"], "seconds")
         time.sleep(params["SleepInterval"])
     return
 """
+ pseudo code notes:
     while True:
         TimeNow = time.localtime(time.time()).tm_hour
         log("Checking time...")
