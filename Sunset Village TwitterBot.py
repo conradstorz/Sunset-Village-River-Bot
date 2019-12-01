@@ -61,11 +61,10 @@ def UpdatePrediction(twtr, tm, db):
     return waitTime
 
 
-def Main(credentials, params):
+def Main(credentials):
 
     # unpack the credentials before submitting to Twython
     a, b, c, d = credentials
-
     # establish the twitter access object
     twitter = Twython(a, b, c, d)
 
@@ -84,4 +83,4 @@ def Main(credentials, params):
 
 
 if __name__ == "__main__":
-    Main(TWITTER_CREDENTIALS, TWEET_GLOBALS)
+    Main(TWITTER_CREDENTIALS)
