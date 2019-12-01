@@ -20,7 +20,7 @@ from pprint import pprint
 from pupdb.core import PupDB
 
 PupDB_FILENAME = "SVTB-DB.json_db"
-PupDB_MRTkey = "M_R_Tweet"
+PupDB_MRTkey = "MostRecentTweet"
 
 from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
