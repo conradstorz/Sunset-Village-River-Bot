@@ -27,18 +27,8 @@ from TwitterCredentials import APP_SECRET
 from TwitterCredentials import OAUTH_TOKEN
 from TwitterCredentials import OAUTH_TOKEN_SECRET
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-MAXIMUM_TWEETS_PER_HOUR = 1
+MAXIMUM_TWEETS_PER_HOUR = .2
 MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR # in seconds
-
-TWEET_GLOBALS = { #TODO make this a list of times and have tweet function limit number of tweets per hour
-                    #TODO also... make the frequency go up when flooding is significant. Use the action levels of McAlpine dam as indicators of needed frequency
-                    #TODO make twittrbot interactive with users by allowing them to tweet a mile marker they want monitored and add it to the outgoing tweets for a period of 30 days. must be between markland and mcalpine for this bot.
-    "MorningTweetTime": 6, #hour
-    "MorningTweet": False,  # has morning tweet occured
-    "EveningTweetTime": 18, #hour
-    "EveningTweet": False,
-    "SleepInterval": 1200,  # 20 minutes
-}
 
 
 def UpdatePrediction(twtr, tm, db):
@@ -57,7 +47,7 @@ def UpdatePrediction(twtr, tm, db):
     elapsed = tm - prevTweet # returns a timedelta object
     if elapsed.seconds >= MINIMUM_TIME_BETWEEN_TWEETS:
         print("Tweeting...")
-        db.set(PupDB_MRTkey, tm)
+        db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         print("Tweet sent.")
         # print('results = ',sp)
@@ -87,56 +77,11 @@ def Main(credentials, params):
         storage_db.set(PupDB_MRTkey, str(TimeNow))
 
     while True:
-        """
-        strTimeNow = str(datetime.now())
-
-        TimeNow = time.localtime(time.time()).tm_hour
-        print("Checking time...", strTimeNow)
-
-        if params["MorningTweet"] != True:
-            if TimeNow == params["MorningTweetTime"]:
-                params["MorningTweet"] = True
-                params["EveningTweet"] = False
-                UpdatePrediction(twitter, strTimeNow)
-
-        if params["EveningTweet"] != True:
-            if TimeNow == params["EveningTweetTime"]:
-                params["EveningTweet"] = True
-                params["MorningTweet"] = False
-                UpdatePrediction(twitter, strTimeNow)
-
-        print("Time to sleep", params["SleepInterval"], "seconds")
-        """
+        TimeNow = datetime.now()
         wait = UpdatePrediction(twitter, TimeNow, storage_db)
-        time.sleep(wait) # delay until next tweet
+        time.sleep(wait / 5) # delay until next check
     return
-"""
- pseudo code notes:
-    while True:
-        TimeNow = time.localtime(time.time()).tm_hour
-        log("Checking time...")
-        if time in timestotweet:
-            log("its a tweet'n time!")
-            updateprediction(twitter)
-        log("sleeping")
-        sleep(areasonabletime)
-    
-    def UpdatePrediction(twtr):
-        if tweetsthishour <= MAXIMUM_TWEETS_PER_HOUR:
-            log("getting readings")
-            x = get_level() #retrieve river level readings
-            sp = safeprint(x) #use pprint to serialize a version of the result
-            log("Tweeting...")
-            twtr.update_status(status=sp)
-            log("Tweet sent.")
-            log('results = ',sp)
-            for item in x:
-                log(item)
-            log("Length of string = ", len(safeprint(x)))
-        else:
-            log("tweets per hour maximum reached")
-        return
-"""
+
 
 if __name__ == "__main__":
     Main(TWITTER_CREDENTIALS, TWEET_GLOBALS)
