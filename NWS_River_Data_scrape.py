@@ -3,7 +3,8 @@ river level data for both Markland and McAlpine dams. By using the mileage marke
 the level of the river can be calculated. 
 """
 from loguru import logger
-logger.remove() # stop any default logger
+
+logger.remove()  # stop any default logger
 LOGGING_LEVEL = "DEBUG"
 from os import sys, path
 from datetime import datetime, timezone
@@ -58,15 +59,24 @@ def Process_Data():
     # process the data returned from waterdata.usgs.gov
     # into a list of dictionaries
     for river in soup.select("h1.data_name"):
-        logger.debug('RIVER: '+ river.get_text())
+        logger.debug("RIVER: " + river.get_text())
         river_name = river.get_text(strip=True)
-        logger.debug('RIVER NAME: '+ river_name)
+        logger.debug("RIVER NAME: " + river_name)
         river_data = river.find_next_sibling("div")
-        logger.debug('RIVER DATA: '+ river_data.get_text())
-        logger.debug('RIVER DATA: '+ river_data.select_one(".stage_stage_flow").get_text())
-        logger.debug('RIVER DATA: '+ river_data.select_one(".flood_stage_flow").get_text())
-        logger.debug('RIVER DATA: '+ river_data.select_one(".current_warns_statmnts_ads > b").next_sibling.strip())
-        #logger.debug('RIVER DATA: '+ river_data)
+        logger.debug("RIVER DATA: " + river_data.get_text())
+        logger.debug(
+            "RIVER DATA: " + river_data.select_one(".stage_stage_flow").get_text()
+        )
+        logger.debug(
+            "RIVER DATA: " + river_data.select_one(".flood_stage_flow").get_text()
+        )
+        logger.debug(
+            "RIVER DATA: "
+            + river_data.select_one(
+                ".current_warns_statmnts_ads > b"
+            ).next_sibling.strip()
+        )
+        # logger.debug('RIVER DATA: '+ river_data)
         data.append(
             {
                 "name": river_name,
@@ -131,28 +141,35 @@ def calculated_Bushmans_river_level():
     output.append("River Levels: " + pprint(river_levels))
 
     projected_level_at_Bushmans = Calclate_level(river_levels, LOCATION_OF_INTEREST)
-    #print("projected_level_at_Bushmans ", projected_level_at_Bushmans)
+    # print("projected_level_at_Bushmans ", projected_level_at_Bushmans)
     output.append("calculated_level_at_Bushmans " + pprint(projected_level_at_Bushmans))
-    
+
     return output
+
 
 @logger.catch
 def defineLoggers():
-    logger.add(sys.stderr, colorize=True, format="<green>{time}</green> {level} <red>{message}</red>", level=LOGGING_LEVEL)
+    logger.add(
+        sys.stderr,
+        colorize=True,
+        format="<green>{time}</green> {level} <red>{message}</red>",
+        level=LOGGING_LEVEL,
+    )
     logger.add(  # create a new log file for each run of the program
-        runtime_name + "_{time}.log", level="DEBUG" # always send debug output to file
+        runtime_name + "_{time}.log", level="DEBUG"  # always send debug output to file
     )
     return
 
 
 @logger.catch
 def MAIN():
-    results = 'Blank'
+    results = "Blank"
     defineLoggers()
     logger.info("Program Start.")
     results = calculated_Bushmans_river_level()
     print(pprint(results))
     return True
+
 
 if __name__ == "__main__":
     MAIN()
