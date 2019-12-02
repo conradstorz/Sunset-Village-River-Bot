@@ -72,6 +72,7 @@ def get_prime_readings_list(fqdn):
     print('...begin list of "map" objects...')
     map_raw = html.select('map')[0]
     #print(map_raw)
+    #TODO build dictionary of items as opposed to discarding some and listing others thus allowing further processing based on item tags.
     itemsToRemove = ['<area', 'coords', 'href', 'shape', 'alt=', ]
     for i, e in enumerate(map_raw.findAll('area')):
         t = str(e)
