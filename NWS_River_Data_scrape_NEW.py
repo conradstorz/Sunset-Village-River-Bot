@@ -70,9 +70,12 @@ def get_prime_readings_list(fqdn):
     html = BeautifulSoup(raw_response, 'html.parser')
     #print(html)
     print('...begin list of "map" objects...')
-    map_raw = html.select('map')[0]
+    map_raw = html.select('map')[0] #grab first item named 'map'
     #print(map_raw)
     #TODO build dictionary of items as opposed to discarding some and listing others thus allowing further processing based on item tags.
+    #for i, e in enumerate(map_raw.findAll('area')):
+    #   place 'e' in dict
+    #return dict
     itemsToRemove = ['<area', 'coords', 'href', 'shape', 'alt=', ]
     for i, e in enumerate(map_raw.findAll('area')):
         t = str(e)
