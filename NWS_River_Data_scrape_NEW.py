@@ -5,8 +5,8 @@ the level of the river can be calculated.
 McAlpine flood action levels
 Major Flood Stage: 	38
 Moderate Flood Stage: 	30
-Flood Stage: 	23
-Action Stage: 	21
+Minor Flood Stage: 	23
+First Action Stage: 	21
 """
 from loguru import logger
 logger.remove() # stop any default logger
@@ -21,8 +21,8 @@ from bs4 import BeautifulSoup
 
 RUNTIME_NAME = path.basename(__file__)
 Data_datestamp = datetime.now()
-MARKLAND_DAM_URL = 'https://water.weather.gov/ahps2/hydrograph.php?wfo=iln&gage=mklk2'
-MCALPINE_DAM_URL = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=hydrograph"
+MCALPINE_DAM_URL = 'https://water.weather.gov/ahps2/hydrograph.php?wfo=iln&gage=mklk2'
+MARKLAND_DAM_URL = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=hydrograph"
 
 
 @logger.catch
@@ -89,15 +89,18 @@ def get_prime_readings_list(fqdn):
     return prime_list
 
 @logger.catch
-def build_river_dict(dict, fqdn):
+def build_river_dict(d, fqdn):
     """ return a dict of river names containing a dict of river conditions
     """
-    d = {}
     results = get_prime_readings_list(fqdn)
-    for r, i in enumerate(results):
-        for item, indx in enumerate(r):
-            d[i] = {indx: item}
-    return
+    logger.info('traverse results')
+    for i, lst in enumerate(results):
+        logger.error(str(lst) + saferepr(i))
+        d2 = {}
+        for indx, item in enumerate(lst):
+            d2[indx] = item
+        d[i] = d2
+    return d
 
 
 @logger.catch
@@ -120,6 +123,8 @@ def MAIN():
     logger.info("Program Start.", RUNTIME_NAME)
     results = get_prime_readings_list(MCALPINE_DAM_URL)
     logger.info(saferepr(results))
+    dctnry = build_river_dict({}, MCALPINE_DAM_URL)
+    logger.info(saferepr(dctnry))
     return True
 
 
