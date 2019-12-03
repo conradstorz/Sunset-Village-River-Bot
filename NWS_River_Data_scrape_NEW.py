@@ -8,12 +8,20 @@ Moderate Flood Stage: 	30
 Minor Flood Stage: 	23
 First Action Stage: 	21
 """
+
+import sys
 from loguru import logger
 logger.remove() # stop any default logger
 LOGGING_LEVEL = "DEBUG"
 from os import sys, path
 from datetime import datetime, timezone
+from dateutil import parser as dateparser
+from dateutil.utils import default_tzinfo
+import datefinder
+from dateparser.search import search_dates
+#import arrow
 from pprint import saferepr
+from pprint import pprint
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
@@ -79,14 +87,44 @@ def get_prime_readings_list(fqdn):
     tree = ET.fromstring(str(map_raw), parser=parser)
     root = tree.getroottree()
     root_map = root.getroot()
-    print(root_map)
+    #print(root_map)
+    map_dict = {}
     for child in root_map:
         #print('root_map_child tag: ', child.tag)
-        print('root_map_child attrib: ', child.attrib)
+        try:
+            child_list = child.attrib['alt'].split()
+            print('=== root_map_child attrib: ', child_list) 
+            print(child.attrib['alt'])
+            searchdate =   search_dates(child.attrib['title'], languages=['en'])
+            if type(searchdate) == list:    
+                child_date =  searchdate[0][1]
+                date_iso = child_date.isoformat()
+                print('search:', type(child_date), date_iso)
+                if child_list[4] == '12:00AM': # reset time to 00:00:00 since it incorrectly gets set to 12:00:00
+                    """ fix the timecode """
+                if date_iso in map_dict:
+                    print('duplicate key!')
+                    print(child_list)
+                    
+                else:
+                    map_dict[date_iso] = child_list
+            else:
+                print('no date found')
+            #print('find:',list(datefinder.find_dates(child.attrib['title'])))            
+            #date = dateparser.parse(child.attrib['title'],fuzzy=True)
+            #print('parse:',date)
+        except ValueError as e:
+            print(e)
+            print('no date')
+        except KeyError:
+            print('no title')  
+    #pprint(map_dict)
     #TODO build dictionary of items as opposed to discarding some and listing others thus allowing further processing based on item tags.
     #for i, e in enumerate(map_raw.findAll('area')):
     #   place 'e' in dict
     #return dict
+
+    """
     itemsToRemove = ['<area', 'coords', 'href', 'shape', 'alt=', ]
     for i, e in enumerate(map_raw.findAll('area')):
         t = str(e)
@@ -102,6 +140,9 @@ def get_prime_readings_list(fqdn):
         if s[0] == 'Observation:' or s[0] == 'Forecast:' or s[0] == 'observed':
             prime_list.append(s)
     return prime_list
+    """
+
+
 
 @logger.catch
 def build_river_dict(d, fqdn):
