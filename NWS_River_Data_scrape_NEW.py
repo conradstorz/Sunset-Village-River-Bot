@@ -18,6 +18,9 @@ from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
+#import xml.etree.ElementTree as ET
+from lxml import etree as ET
+
 
 RUNTIME_NAME = path.basename(__file__)
 Data_datestamp = datetime.now()
@@ -66,12 +69,20 @@ def log_error(e):
 @logger.catch
 def get_prime_readings_list(fqdn):
     prime_list = []
-    raw_response = simple_get(MARKLAND_DAM_URL)
+    raw_response = simple_get(fqdn)
     html = BeautifulSoup(raw_response, 'html.parser')
     #print(html)
     print('...begin list of "map" objects...')
     map_raw = html.select('map')[0] #grab first item named 'map'
     #print(map_raw)
+    parser = ET.XMLParser(recover=True)
+    tree = ET.fromstring(str(map_raw), parser=parser)
+    root = tree.getroottree()
+    root_map = root.getroot()
+    print(root_map)
+    for child in root_map:
+        #print('root_map_child tag: ', child.tag)
+        print('root_map_child attrib: ', child.attrib)
     #TODO build dictionary of items as opposed to discarding some and listing others thus allowing further processing based on item tags.
     #for i, e in enumerate(map_raw.findAll('area')):
     #   place 'e' in dict
@@ -96,10 +107,11 @@ def get_prime_readings_list(fqdn):
 def build_river_dict(d, fqdn):
     """ return a dict of river names containing a dict of river conditions
     """
+    logger.info('get readings')
     results = get_prime_readings_list(fqdn)
     logger.info('traverse results')
     for i, lst in enumerate(results):
-        logger.error(str(lst) + saferepr(i))
+        #logger.error(str(lst) + saferepr(i))
         d2 = {}
         for indx, item in enumerate(lst):
             d2[indx] = item
@@ -126,9 +138,10 @@ def MAIN():
     defineLoggers()
     logger.info("Program Start.", RUNTIME_NAME)
     results = get_prime_readings_list(MCALPINE_DAM_URL)
-    logger.info(saferepr(results))
-    dctnry = build_river_dict({}, MCALPINE_DAM_URL)
-    logger.info(saferepr(dctnry))
+    #logger.info(saferepr(results))
+    newdict = {}
+    #dctnry = build_river_dict(newdict, MCALPINE_DAM_URL)
+    #logger.info(saferepr(dctnry))
     return True
 
 
