@@ -75,6 +75,14 @@ def log_error(e):
 
 
 @logger.catch
+def ISO_datestring(dt, cl):
+    isodatestr = dt.isoformat()
+    if cl[4] == '12:00AM': # reset time to 00:00:00 since it incorrectly gets set to 12:00:00
+        """ fix the timecode """
+        isodatestr = isodatestr[0:11] + '00:00:00'
+    return isodatestr
+
+@logger.catch
 def get_prime_readings_list(fqdn):
     prime_list = []
     raw_response = simple_get(fqdn)
@@ -98,10 +106,7 @@ def get_prime_readings_list(fqdn):
             searchdate =   search_dates(child.attrib['title'], languages=['en'])
             if type(searchdate) == list:    
                 child_date =  searchdate[0][1]
-                date_iso = child_date.isoformat()
-                if child_list[4] == '12:00AM': # reset time to 00:00:00 since it incorrectly gets set to 12:00:00
-                    """ fix the timecode """
-                    date_iso = date_iso[0:11] + '00:00:00'
+                date_iso = ISO_datestring(child_date, child_list)
                 print('search:', type(child_date), date_iso)
                 if date_iso in map_dict:
                     print('duplicate key!')
