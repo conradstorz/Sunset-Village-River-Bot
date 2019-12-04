@@ -48,8 +48,8 @@ MCALPINE_DAM_DETAILS = {
     "milemarker": 606.8,
     "guage_elevation": 407.18,
     "first-action": 21,
-    "minor": 23,
-    "moderate": 30,
+    "minor-flood": 23,
+    "moderate-flood": 30,
     "major-flood": 38,
 }
 MARKLAND_DAM_URL = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=hydrograph"
@@ -58,15 +58,15 @@ MARKLAND_DAM_DETAILS = {
     "milemarker": 531,
     "guage_elevation": 408,
     "first-action": 49,
-    "minor": 51,
-    "moderate": 62,
+    "minor-flood": 51,
+    "moderate-flood": 62,
     "major-flood": 74,
 }
-RIVER_DETAILS = {
+RIVER_MONITORING_POINTS = {
     MCALPINE_DAM_NAME: [MCALPINE_DAM_URL, MCALPINE_DAM_DETAILS],
     MARKLAND_DAM_NAME: [MARKLAND_DAM_URL, MARKLAND_DAM_DETAILS],
 }
-RIVERS = list(RIVER_DETAILS.keys())
+DAMS = list(RIVER_MONITORING_POINTS.keys())
 
 
 @logger.catch
@@ -123,15 +123,13 @@ def ISO_datestring(dt, cl):
 
 
 @logger.catch
-def get_prime_readings_list(
-    river
-):  # TODO change this to a dict key using simplified river name
-    raw_response = simple_get(RIVER_DETAILS[river][0])
+def current_river_conditions(monitoring_point):
+    raw_response = simple_get(RIVER_MONITORING_POINTS[monitoring_point][0])
     html = BeautifulSoup(raw_response, "html.parser")
     print('...begin list of "map" objects...')
     map_raw = html.select("map")[0]  # grab first item named 'map'
-    parser = ET.XMLParser(recover=True)
-    tree = ET.fromstring(str(map_raw), parser=parser)
+    parser_engine = ET.XMLParser(recover=True)
+    tree = ET.fromstring(str(map_raw), parser=parser_engine)
     root = tree.getroottree()
     root_map = root.getroot()
     # print(root_map)
@@ -142,7 +140,7 @@ def get_prime_readings_list(
             child_list = child.attrib[
                 "alt"
             ].split()  # TODO append simplified river name to list
-            child_list.append(river)
+            child_list.append(monitoring_point)
             print("=== root_map_child attrib: ", child_list)
             print(child.attrib["alt"])
             searchdate = search_dates(child.attrib["title"], languages=["en"])
@@ -157,32 +155,26 @@ def get_prime_readings_list(
                     print(child_list)
 
                 else:
-                    map_dict[
-                        date_iso
-                    ] = child_list  # TODO add simplified river name to dict key
+                    observation_key = date_iso + monitoring_point
+                    map_dict[observation_key] = child_list
             else:
                 print("no date found")
-            # print('find:',list(datefinder.find_dates(child.attrib['title'])))
-            # date = dateparser.parse(child.attrib['title'],fuzzy=True)
-            # print('parse:',date)
         except ValueError as e:
             print(e)
             print("no date")
         except KeyError:
             print("no title")
     # pprint(map_dict)
-    # TODO build dictionary of items as opposed to discarding some and listing others thus allowing further processing based on item tags.
-    # for i, e in enumerate(map_raw.findAll('area')):
-    #   place 'e' in dict
-    # return dict
+    return map_dict
 
 
 @logger.catch
-def build_river_dict(d, rvr):
-    """ return a dict of river names containing a dict of river conditions
+def build_river_dict(d, dam):
+    """ return a dict of dam names containing observations of river conditions
     """
+    results_dict = {}
     logger.info("get readings")
-    results = get_prime_readings_list(rvr)
+    results_dict = current_river_conditions(dam)
     logger.info("traverse results")
     for i, lst in enumerate(results):
         # logger.error(str(lst) + saferepr(i))
@@ -209,14 +201,14 @@ def defineLoggers():
 
 @logger.catch
 def MAIN():
-    results = "Blank"
     defineLoggers()
     logger.info("Program Start.", RUNTIME_NAME)
-    results = get_prime_readings_list(RIVERS[0])
+    results = current_river_conditions(DAMS[0])
     # logger.info(saferepr(results))
     newdict = {}
     # dctnry = build_river_dict(newdict, MCALPINE_DAM_URL)
     # logger.info(saferepr(dctnry))
+    pprint(results)
     return True
 
 
