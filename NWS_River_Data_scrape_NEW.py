@@ -83,7 +83,7 @@ def ISO_datestring(dt, cl):
     return isodatestr
 
 @logger.catch
-def get_prime_readings_list(fqdn):
+def get_prime_readings_list(fqdn): #TODO change this to a dict key using simplified river name
     prime_list = []
     raw_response = simple_get(fqdn)
     html = BeautifulSoup(raw_response, 'html.parser')
@@ -100,20 +100,20 @@ def get_prime_readings_list(fqdn):
     for child in root_map:
         #print('root_map_child tag: ', child.tag)
         try:
-            child_list = child.attrib['alt'].split()
+            child_list = child.attrib['alt'].split() #TODO append simplified river name to list
             print('=== root_map_child attrib: ', child_list) 
             print(child.attrib['alt'])
             searchdate =   search_dates(child.attrib['title'], languages=['en'])
             if type(searchdate) == list:    
-                child_date =  searchdate[0][1]
-                date_iso = ISO_datestring(child_date, child_list)
+                child_date =  searchdate[0][1] #TODO append dt obj to child_list
+                date_iso = ISO_datestring(child_date, child_list) #TODO append datestr to child_list
                 print('search:', type(child_date), date_iso)
                 if date_iso in map_dict:
-                    print('duplicate key!')
+                    print('duplicate key!') #TODO raise dupkey error
                     print(child_list)
                     
                 else:
-                    map_dict[date_iso] = child_list
+                    map_dict[date_iso] = child_list #TODO add simplified river name to dict key
             else:
                 print('no date found')
             #print('find:',list(datefinder.find_dates(child.attrib['title'])))            
