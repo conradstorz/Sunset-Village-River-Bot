@@ -43,11 +43,25 @@ RUNTIME_NAME = path.basename(__file__)
 Data_datestamp = datetime.now()
 
 MCALPINE_DAM_URL = "https://water.weather.gov/ahps2/hydrograph.php?wfo=iln&gage=mklk2"
-MCALPINE_DAM_NAME = 'McAlpine'
-MCALPINE_DAM_DETAILS = [606.8, 407.18, 21, 23, 30, 38] #milemarker, guage elevation, first-action, minor, moderate, major-flood
+MCALPINE_DAM_NAME = "McAlpine"
+MCALPINE_DAM_DETAILS = {
+    "milemarker": 606.8,
+    "guage_elevation": 407.18,
+    "first-action": 21,
+    "minor": 23,
+    "moderate": 30,
+    "major-flood": 38,
+}
 MARKLAND_DAM_URL = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=hydrograph"
-MARKLAND_DAM_NAME = 'Markland'
-MARKLAND_DAM_DETAILS = [531, 408, 49, 51, 62, 74]
+MARKLAND_DAM_NAME = "Markland"
+MARKLAND_DAM_DETAILS = {
+    "milemarker": 531,
+    "guage_elevation": 408,
+    "first-action": 49,
+    "minor": 51,
+    "moderate": 62,
+    "major-flood": 74,
+}
 RIVER_DETAILS = {
     MCALPINE_DAM_NAME: [MCALPINE_DAM_URL, MCALPINE_DAM_DETAILS],
     MARKLAND_DAM_NAME: [MARKLAND_DAM_URL, MARKLAND_DAM_DETAILS],
@@ -161,24 +175,6 @@ def get_prime_readings_list(
     # for i, e in enumerate(map_raw.findAll('area')):
     #   place 'e' in dict
     # return dict
-
-    """
-    itemsToRemove = ['<area', 'coords', 'href', 'shape', 'alt=', ]
-    for i, e in enumerate(map_raw.findAll('area')):
-        t = str(e)
-        l = t.split()
-        s = []
-        for e1 in l:
-            remove = False
-            for e2 in itemsToRemove:
-                if e2 in e1:
-                    remove = True
-            if not remove:
-                s.append(e1)
-        if s[0] == 'Observation:' or s[0] == 'Forecast:' or s[0] == 'observed':
-            prime_list.append(s)
-    return prime_list
-    """
 
 
 @logger.catch
