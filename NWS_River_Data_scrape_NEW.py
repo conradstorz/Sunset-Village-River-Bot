@@ -110,15 +110,12 @@ def ISO_datestring(dt, cl):
 
 @logger.catch
 def get_prime_readings_list(
-    fqdn
+    river
 ):  # TODO change this to a dict key using simplified river name
-    prime_list = []
-    raw_response = simple_get(fqdn)
+    raw_response = simple_get(RIVER_DETAILS[river][0])
     html = BeautifulSoup(raw_response, "html.parser")
-    # print(html)
     print('...begin list of "map" objects...')
     map_raw = html.select("map")[0]  # grab first item named 'map'
-    # print(map_raw)
     parser = ET.XMLParser(recover=True)
     tree = ET.fromstring(str(map_raw), parser=parser)
     root = tree.getroottree()
@@ -131,7 +128,7 @@ def get_prime_readings_list(
             child_list = child.attrib[
                 "alt"
             ].split()  # TODO append simplified river name to list
-            child_list.append(RIVERS[0])
+            child_list.append(river)
             print("=== root_map_child attrib: ", child_list)
             print(child.attrib["alt"])
             searchdate = search_dates(child.attrib["title"], languages=["en"])
@@ -185,11 +182,11 @@ def get_prime_readings_list(
 
 
 @logger.catch
-def build_river_dict(d, fqdn):
+def build_river_dict(d, rvr):
     """ return a dict of river names containing a dict of river conditions
     """
     logger.info("get readings")
-    results = get_prime_readings_list(fqdn)
+    results = get_prime_readings_list(rvr)
     logger.info("traverse results")
     for i, lst in enumerate(results):
         # logger.error(str(lst) + saferepr(i))
@@ -219,7 +216,7 @@ def MAIN():
     results = "Blank"
     defineLoggers()
     logger.info("Program Start.", RUNTIME_NAME)
-    results = get_prime_readings_list(MCALPINE_DAM_URL)
+    results = get_prime_readings_list(RIVERS[0])
     # logger.info(saferepr(results))
     newdict = {}
     # dctnry = build_river_dict(newdict, MCALPINE_DAM_URL)
