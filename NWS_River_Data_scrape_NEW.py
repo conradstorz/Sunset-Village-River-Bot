@@ -228,4 +228,11 @@ if __name__ == "__main__":
 'Forecast:'
 'Latest'
 'Highest'
+['Highest', 'Observation:', '12.99', 'ft', 'at', '1:35AM', 'Dec', '02,', '2019', 'Markland']
+['Highest', 'Observation:', '27.8', 'ft', 'at', '10:00PM', 'Dec', '03,', '2019', 'McAlpine']
+['Highest', 'Observation:', '27.8', 'ft', 'at', '11:00PM', 'Dec', '03,', '2019', 'McAlpine']
+['Latest', 'observed', 'value:', '12.95', 'ft', 'at', '9:00', 'PM', 'EST', '4-Dec-2019.', 'Flood', 'Stage', 'is', '23', 'ft', 'Markland']
+['Latest', 'observed', 'value:', '26.1', 'ft', 'at', '9:00', 'PM', 'EST', '4-Dec-2019.', 'Flood', 'Stage', 'is', '51', 'ft', 'McAlpine']
+['Highest', 'Forecast:', '12.6', 'ft', '1:00AM', 'Dec', '05,', '2019', 'Markland']
+['Highest', 'Forecast:', '25.7', 'ft', '1:00AM', 'Dec', '05,', '2019', 'McAlpine']
 '''
