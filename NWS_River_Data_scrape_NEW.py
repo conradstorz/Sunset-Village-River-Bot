@@ -214,10 +214,18 @@ def MAIN():
     # logger.info(saferepr(dctnry))
     times = list(results.keys())
     times = sorted(times)
+    important = ['Forecast:', 'Latest','Highest' ]
     for item in times:
-        print(item)
+        if results[item][0] in important:
+            print(results[item])
     return True
 
 
 if __name__ == "__main__":
     MAIN()
+'''    
+'Observed'
+'Forecast:'
+'Latest'
+'Highest'
+'''
