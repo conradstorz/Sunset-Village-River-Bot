@@ -134,57 +134,40 @@ def current_river_conditions(monitoring_point, dct):
     tree = ET.fromstring(str(map_raw), parser=parser_engine)
     root = tree.getroottree()
     root_map = root.getroot()
-    # print(root_map)
+    # print(root_map) #logger debug
     map_dict = dct
     for child in root_map:
-        # print('root_map_child tag: ', child.tag)
+        # print('root_map_child tag: ', child.tag)#logger debug
         try:
-            child_list = child.attrib[
-                "alt"
-            ].split()  # TODO append simplified river name to list
+            child_list = child.attrib["alt"].split()
             child_list.append(monitoring_point)
-            print("=== root_map_child attrib: ", child_list)
-            print(child.attrib["alt"])
+            #print("=== root_map_child attrib: ", child_list)#logger debug
+            #print(child.attrib["alt"])#logger debug
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
                 child_date = searchdate[0][1]  # TODO append dt obj to child_list
                 date_iso = ISO_datestring(
                     child_date, child_list
                 )  # TODO append datestr to child_list
-                print("search:", type(child_date), date_iso)
+                #print("search:", type(child_date), date_iso)
+                # TODO convert these error prints to logging
                 if date_iso in map_dict:
                     print("duplicate key!")  # TODO raise dupkey error
                     print(child_list)
-
                 else:
                     observation_key = date_iso + monitoring_point
                     map_dict[observation_key] = child_list
             else:
                 print("no date found")
+                print(child.attrib)
         except ValueError as e:
-            print(e)
             print("no date")
+            print(e)            
         except KeyError:
             print("no title")
+            print(child.attrib)
     # pprint(map_dict)
     return map_dict
-
-
-@logger.catch
-def build_river_dict(d, dam):
-    """ return a dict of dam names containing observations of river conditions
-    """
-    results_dict = {}
-    logger.info("get readings")
-    results_dict = current_river_conditions(dam)
-    logger.info("traverse results")
-    for i, lst in enumerate(results):
-        # logger.error(str(lst) + saferepr(i))
-        d2 = {}
-        for indx, item in enumerate(lst):
-            d2[indx] = item
-        d[i] = d2
-    return d
 
 
 @logger.catch
@@ -208,10 +191,6 @@ def MAIN():
     results = {}
     for name in DAMS:
         results = current_river_conditions(name, results)
-    # logger.info(saferepr(results))
-    #newdict = {}
-    # dctnry = build_river_dict(newdict, MCALPINE_DAM_URL)
-    # logger.info(saferepr(dctnry))
     times = list(results.keys())
     times = sorted(times)
     important = ['Forecast:', 'Latest','Highest' ]
