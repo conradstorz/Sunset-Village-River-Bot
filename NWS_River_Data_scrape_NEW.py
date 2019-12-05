@@ -45,6 +45,7 @@ Data_datestamp = datetime.now()
 MCALPINE_DAM_URL = "https://water.weather.gov/ahps2/hydrograph.php?wfo=iln&gage=mklk2"
 MCALPINE_DAM_NAME = "McAlpine"
 MCALPINE_DAM_DETAILS = {
+    "Dam_URL": MCALPINE_DAM_URL,
     "milemarker": 606.8,
     "guage_elevation": 407.18,
     "first-action": 21,
@@ -55,6 +56,7 @@ MCALPINE_DAM_DETAILS = {
 MARKLAND_DAM_URL = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=hydrograph"
 MARKLAND_DAM_NAME = "Markland"
 MARKLAND_DAM_DETAILS = {
+    "Dam_URL": MARKLAND_DAM_URL,
     "milemarker": 531,
     "guage_elevation": 408,
     "first-action": 49,
@@ -63,8 +65,8 @@ MARKLAND_DAM_DETAILS = {
     "major-flood": 74,
 }
 RIVER_MONITORING_POINTS = {
-    MCALPINE_DAM_NAME: [MCALPINE_DAM_URL, MCALPINE_DAM_DETAILS],
-    MARKLAND_DAM_NAME: [MARKLAND_DAM_URL, MARKLAND_DAM_DETAILS],
+    MCALPINE_DAM_NAME: MCALPINE_DAM_DETAILS,
+    MARKLAND_DAM_NAME: MARKLAND_DAM_DETAILS,
 }
 DAMS = list(RIVER_MONITORING_POINTS.keys())
 
@@ -123,8 +125,8 @@ def ISO_datestring(dt, cl):
 
 
 @logger.catch
-def current_river_conditions(monitoring_point):
-    raw_response = simple_get(RIVER_MONITORING_POINTS[monitoring_point][0])
+def current_river_conditions(monitoring_point, dct):
+    raw_response = simple_get(RIVER_MONITORING_POINTS[monitoring_point]["Dam_URL"])
     html = BeautifulSoup(raw_response, "html.parser")
     print('...begin list of "map" objects...')
     map_raw = html.select("map")[0]  # grab first item named 'map'
@@ -133,7 +135,7 @@ def current_river_conditions(monitoring_point):
     root = tree.getroottree()
     root_map = root.getroot()
     # print(root_map)
-    map_dict = {}
+    map_dict = dct
     for child in root_map:
         # print('root_map_child tag: ', child.tag)
         try:
@@ -203,12 +205,17 @@ def defineLoggers():
 def MAIN():
     defineLoggers()
     logger.info("Program Start.", RUNTIME_NAME)
-    results = current_river_conditions(DAMS[0])
+    results = {}
+    for name in DAMS:
+        results = current_river_conditions(name, results)
     # logger.info(saferepr(results))
-    newdict = {}
+    #newdict = {}
     # dctnry = build_river_dict(newdict, MCALPINE_DAM_URL)
     # logger.info(saferepr(dctnry))
-    pprint(results)
+    times = list(results.keys())
+    times = sorted(times)
+    for item in times:
+        print(item)
     return True
 
 
