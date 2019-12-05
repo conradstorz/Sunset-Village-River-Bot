@@ -196,7 +196,7 @@ def defineLoggers():
         level=LOGGING_LEVEL,
     )
     logger.add(  # create a new log file for each run of the program
-        RUNTIME_NAME + "_{time}.log", level="DEBUG"  # always send debug output to file
+        './LOGS/' + RUNTIME_NAME + "_{time}.log", level="DEBUG"  # always send debug output to file
     )
     return
 

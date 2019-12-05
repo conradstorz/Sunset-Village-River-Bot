@@ -8,7 +8,7 @@ logger.remove()  # stop any default logger
 LOGGING_LEVEL = "DEBUG"
 from os import sys, path
 from datetime import datetime, timezone
-from pprint import saferepr as pprint
+from pprint import saferepr
 import requests
 from bs4 import BeautifulSoup as BS
 
@@ -134,15 +134,15 @@ def Calclate_level(data, offset):
 @logger.catch
 def calculated_Bushmans_river_level():
     river_data, timestamp = Process_Data()
-    logger.debug(pprint(river_data))
+    logger.debug(saferepr(river_data))
     output = [str(timestamp)]
     river_levels = pull_river_levels(river_data, RIVER_GUAGE_NAMES)
-    logger.info(pprint(river_levels))
-    output.append("River Levels: " + pprint(river_levels))
+    logger.info(saferepr(river_levels))
+    output.append("River Levels: " + saferepr(river_levels))
 
     projected_level_at_Bushmans = Calclate_level(river_levels, LOCATION_OF_INTEREST)
     # print("projected_level_at_Bushmans ", projected_level_at_Bushmans)
-    output.append("calculated_level_at_Bushmans " + pprint(projected_level_at_Bushmans))
+    output.append("calculated_level_at_Bushmans " + saferepr(projected_level_at_Bushmans))
 
     return output
 
@@ -167,7 +167,7 @@ def MAIN():
     defineLoggers()
     logger.info("Program Start.")
     results = calculated_Bushmans_river_level()
-    print(pprint(results))
+    print(saferepr(results))
     return True
 
 
