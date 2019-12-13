@@ -39,16 +39,19 @@ def UpdatePrediction(twtr, tm, db):
     db = PupDB obj
     Returns the time to wait until next tweet
     """
-    waitTime = 0
-    x = get_level()  # retrieve river level readings
-    sp = saferepr(x)  # use pprint to serialize a version of the result
-
     MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
     # check tm against minimum tweet time
+    print(tm)
+    print(prevTweet)
     elapsed = tm - prevTweet  # returns a timedelta object
-    if elapsed.seconds >= MINIMUM_TIME_BETWEEN_TWEETS:
+    print(elapsed)
+    print(elapsed.total_seconds())
+    if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         print("Tweeting...")
+        waitTime = 0
+        x = get_level()  # retrieve river level readings
+        sp = saferepr(x)  # use pprint to serialize a version of the result
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         print("Tweet sent.")
