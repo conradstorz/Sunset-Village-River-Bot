@@ -126,6 +126,9 @@ def ISO_datestring(dt, cl):
 
 @logger.catch
 def current_river_conditions(monitoring_point, dct):
+    """ scrape NOAA website for current river conditions.
+    Write results to PupDB file and include current flooding action level
+    """
     raw_response = simple_get(RIVER_MONITORING_POINTS[monitoring_point]["Dam_URL"])
     html = BeautifulSoup(raw_response, "html.parser")
     print('...begin list of "map" objects...')
@@ -171,6 +174,25 @@ def current_river_conditions(monitoring_point, dct):
 
 
 @logger.catch
+def processRiverData():
+    """get current data from NOAA website and return conditions including flood action levels
+    """
+    defineLoggers()
+    logger.info("Program Start.", RUNTIME_NAME)
+    results = {}
+    for name in DAMS:
+        results = current_river_conditions(name, results)
+    times = list(results.keys())
+    times = sorted(times)
+    important = ['Forecast:', 'Latest','Highest' ]
+    for item in times:
+        if results[item][0] in important:
+            print(results[item])
+    return (results) #TODO define a dict of dams and action alerts
+
+
+
+@logger.catch
 def defineLoggers():
     logger.add(
         sys.stderr,
@@ -186,17 +208,7 @@ def defineLoggers():
 
 @logger.catch
 def MAIN():
-    defineLoggers()
-    logger.info("Program Start.", RUNTIME_NAME)
-    results = {}
-    for name in DAMS:
-        results = current_river_conditions(name, results)
-    times = list(results.keys())
-    times = sorted(times)
-    important = ['Forecast:', 'Latest','Highest' ]
-    for item in times:
-        if results[item][0] in important:
-            print(results[item])
+    processRiverData()
     return True
 
 
