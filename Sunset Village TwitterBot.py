@@ -21,6 +21,8 @@ from pupdb.core import PupDB
 
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
+PupDB_MRLkey = "MostRecentRiverLevel"
+PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 
 from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
@@ -42,11 +44,11 @@ def UpdatePrediction(twtr, tm, db):
     MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
     # check tm against minimum tweet time
-    print('Time now: ', tm)
-    print('Previous Tweet time: ', prevTweet)
+    print("Time now: ", tm)
+    print("Previous Tweet time: ", prevTweet)
     elapsed = tm - prevTweet  # returns a timedelta object
-    print('Time since last Tweet: ', elapsed)
-    print('Total number of seconds elapsed: ', elapsed.total_seconds())
+    print("Time since last Tweet: ", elapsed)
+    print("Total number of seconds elapsed: ", elapsed.total_seconds())
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         print("Tweeting...")
         waitTime = 0
