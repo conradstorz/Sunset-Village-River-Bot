@@ -24,6 +24,17 @@ PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
 PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 
+ACTION_LABELS = ["First-action", "Minor-flood", "Moderate-flood", "Major-flood"]
+ACTION_LEVELS = [21, 23, 30, 38]
+ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABLES))
+
+""" flooding action levels for McAlpine dam upper guage in louisville
+    "first-action": 21,
+    "minor-flood": 23,
+    "moderate-flood": 30,
+    "major-flood": 38,
+"""
+
 from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
 from TwitterCredentials import APP_SECRET
