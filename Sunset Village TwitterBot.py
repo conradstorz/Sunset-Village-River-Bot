@@ -26,7 +26,7 @@ PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 
 ACTION_LABELS = ["First-action", "Minor-flood", "Moderate-flood", "Major-flood"]
 ACTION_LEVELS = [21, 23, 30, 38]
-ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABLES))
+ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 
 """ flooding action levels for McAlpine dam upper guage in louisville
     "first-action": 21,
