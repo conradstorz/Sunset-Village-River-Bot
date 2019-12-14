@@ -103,22 +103,21 @@ def current_river_conditions(monitoring_point, dct):
                     child_date, child_list
                 )  # TODO append datestr to child_list
                 # print("search:", type(child_date), date_iso)
-                # TODO convert these error prints to logging
                 if date_iso in map_dict:
-                    print("duplicate key!")  # TODO raise dupkey error
-                    print(child_list)
+                    logger.error("duplicate key!")  # TODO raise dupkey error
+                    logger.error(child_list)
                 else:
                     observation_key = date_iso + monitoring_point
                     map_dict[observation_key] = child_list
             else:
-                print("no date found")
-                print(child.attrib)
+                logger.error("no date found")
+                logger.error(child.attrib)
         except ValueError as e:
-            print("no date")
-            print(e)
+            logger.error("no date")
+            logger.error(e)
         except KeyError:
-            print("no title")
-            print(child.attrib)
+            logger.error("no title")
+            logger.error(child.attrib)
     # pprint(map_dict)
     return map_dict
 
@@ -127,7 +126,7 @@ def current_river_conditions(monitoring_point, dct):
 def processRiverData():
     """get current data from NOAA website and return conditions including flood action levels
     """
-    logger.info("Program Start.", RUNTIME_NAME)
+    logger.info("Program Start: " + RUNTIME_NAME)
     results = {}
     for name in DAMS:
         results = current_river_conditions(name, results)
