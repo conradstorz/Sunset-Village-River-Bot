@@ -6,7 +6,6 @@ NWS website data for the river level both upstream and downstream then calculati
 to get the calculated level at our property. 
 """
 
-import sys
 import time
 from datetime import datetime, timezone
 from datetime import timedelta
@@ -21,6 +20,7 @@ from pprint import saferepr
 from pprint import pprint
 
 from pupdb.core import PupDB
+
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
@@ -47,6 +47,9 @@ TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 MAXIMUM_TWEETS_PER_HOUR = 0.2
 MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR  # in seconds
 
+from os import sys, path
+RUNTIME_NAME = path.basename(__file__)
+
 
 @logger.catch
 def UpdatePrediction(twtr, tm, db):
@@ -72,7 +75,7 @@ def UpdatePrediction(twtr, tm, db):
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         logger.info("Tweet sent.")
-        logger.debug('Tweet string = ' + str(sp))
+        logger.debug("Tweet string = " + str(sp))
         for item in x:
             logger.info(item)
         logger.info("Length of string = ", str(len(saferepr(x))))
@@ -115,12 +118,11 @@ def defineLoggers():
     )
     logger.add(  # create a new log file for each run of the program
         "./LOGS/" + RUNTIME_NAME + "_{time}.log",
-        retention = "10 days",
-        compression = "zip",
+        retention="10 days",
+        compression="zip",
         level="DEBUG",  # always send debug output to file
     )
     return
-
 
 
 if __name__ == "__main__":
