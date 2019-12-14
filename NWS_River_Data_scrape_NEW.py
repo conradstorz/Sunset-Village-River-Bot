@@ -20,7 +20,7 @@ from dateparser.search import search_dates
 from pprint import saferepr
 from pprint import pprint
 
-from WebScraping import cleaned_html
+from WebScraping import retrieve_cleaned_html
 from lxml import etree as ET
 
 
@@ -80,7 +80,7 @@ def current_river_conditions(monitoring_point, dct):
     """ scrape NOAA website for current river conditions.
     Write results to PupDB file and include current flooding action level
     """
-    html = cleaned_html(RIVER_MONITORING_POINTS[monitoring_point]["Dam_URL"])
+    html = retrieve_cleaned_html(RIVER_MONITORING_POINTS[monitoring_point]["Dam_URL"])
     print('...begin list of "map" objects...')
     map_raw = html.select("map")[0]  # grab first item named 'map'
     parser_engine = ET.XMLParser(recover=True)

@@ -51,7 +51,7 @@ def log_error(e):
 
 
 @logger.catch
-def cleaned_html(url):
+def retrieve_cleaned_html(url):
     raw_resp = simple_get(url)
     return BeautifulSoup(raw_resp, "html.parser")
 
