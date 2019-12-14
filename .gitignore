@@ -1,6 +1,9 @@
 # Secret Keys
 *Credentials.py
 
+# zipped logs
+*.log.zip
+
 # local DB files
 *.json_db
 
