@@ -6,13 +6,13 @@ NWS website data for the river level both upstream and downstream then calculati
 to get the calculated level at our property. 
 """
 
-
+import sys
 import time
 from datetime import datetime, timezone
 from datetime import timedelta
 from dateutil import parser
 
-import sys
+
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from pprint import saferepr
 from pprint import pprint
@@ -47,10 +47,11 @@ MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR  # in seconds
 
 
 def UpdatePrediction(twtr, tm, db):
-    """ twtr = twython object
-    tm = datetime obj
-    db = PupDB obj
-    Returns the time to wait until next tweet
+    """ Returns the time to wait until next tweet and Tweets if enough time has passed
+    twtr = twython object for accessing Twitter
+    tm = datetime obj representing current time
+    db = PupDB obj for persistant storage on local machine
+    
     """
     MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
