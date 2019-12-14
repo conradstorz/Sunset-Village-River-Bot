@@ -12,13 +12,15 @@ from datetime import datetime, timezone
 from datetime import timedelta
 from dateutil import parser
 
+from loguru import logger
+logger.remove()  # stop any default logger
+LOGGING_LEVEL = "INFO"
 
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from pprint import saferepr
 from pprint import pprint
 
 from pupdb.core import PupDB
-
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
@@ -46,6 +48,7 @@ MAXIMUM_TWEETS_PER_HOUR = 0.2
 MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR  # in seconds
 
 
+@logger.catch
 def UpdatePrediction(twtr, tm, db):
     """ Returns the time to wait until next tweet and Tweets if enough time has passed
     twtr = twython object for accessing Twitter
@@ -56,32 +59,33 @@ def UpdatePrediction(twtr, tm, db):
     MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
     # check tm against minimum tweet time
-    print("Time now: ", tm)
-    print("Previous Tweet time: ", prevTweet)
+    logger.info("Time now: " + str(tm))
+    logger.info("Previous Tweet time: " + str(prevTweet))
     elapsed = tm - prevTweet  # returns a timedelta object
-    print("Time since last Tweet: ", elapsed)
-    print("Total number of seconds elapsed: ", elapsed.total_seconds())
+    logger.info("Time since last Tweet: " + str(elapsed))
+    logger.info("Total number of seconds elapsed: " + str(elapsed.total_seconds()))
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
-        print("Tweeting...")
+        logger.info("Tweeting...")
         waitTime = 0
         x = get_level()  # retrieve river level readings
         sp = saferepr(x)  # use pprint to serialize a version of the result
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
-        print("Tweet sent.")
-        # print('results = ',sp)
+        logger.info("Tweet sent.")
+        logger.debug('Tweet string = ' + str(sp))
         for item in x:
-            print(item)
-        print("Length of string = ", len(saferepr(x)))
+            logger.info(item)
+        logger.info("Length of string = ", str(len(saferepr(x))))
     else:
-        print("Too soon to tweet.")
+        logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
-        print("Recommend waiting", waitTime, "seconds.")
+        logger.info("Recommend waiting " + str(waitTime) + " seconds.")
     return waitTime
 
 
+@logger.catch
 def Main(credentials):
-
+    defineLoggers()
     # unpack the credentials before submitting to Twython
     a, b, c, d = credentials
     # establish the twitter access object
@@ -99,6 +103,24 @@ def Main(credentials):
         wait = UpdatePrediction(twitter, TimeNow, storage_db)
         time.sleep(wait / 5)  # delay until next check
     return
+
+
+@logger.catch
+def defineLoggers():
+    logger.add(
+        sys.stderr,
+        colorize=True,
+        format="<green>{time}</green> {level} <red>{message}</red>",
+        level=LOGGING_LEVEL,
+    )
+    logger.add(  # create a new log file for each run of the program
+        "./LOGS/" + RUNTIME_NAME + "_{time}.log",
+        retention = "10 days",
+        compression = "zip",
+        level="DEBUG",  # always send debug output to file
+    )
+    return
+
 
 
 if __name__ == "__main__":
