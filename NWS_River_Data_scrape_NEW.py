@@ -6,8 +6,6 @@ river level data for both Markland and McAlpine dams. By using the mileage marke
 the level of the river at that point can be calculated.
 """
 
-import sys
-
 from loguru import logger
 logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
@@ -159,8 +157,8 @@ def defineLoggers():
     )
     logger.add(  # create a new log file for each run of the program
         "./LOGS/" + RUNTIME_NAME + "_{time}.log",
-        retention = "10 days",
-        compression = "zip",
+        retention="10 days",
+        compression="zip",
         level="DEBUG",  # always send debug output to file
     )
     return
