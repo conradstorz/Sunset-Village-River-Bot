@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """ This file contains code that can scrape the Nation Weather Service (NWS) website and read the 
 river level data for both Markland and McAlpine dams. By using the mileage marker for Bushman's Lake 
 the level of the river at that point can be calculated.
@@ -6,7 +9,6 @@ the level of the river at that point can be calculated.
 import sys
 
 from loguru import logger
-
 logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
@@ -173,6 +175,8 @@ def MAIN():
 
 if __name__ == "__main__":
     MAIN()
+
+
 """    
 'Observed'
 'Forecast:'
