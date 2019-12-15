@@ -63,51 +63,39 @@ def test_tweet():
 
 @logger.catch
 def build_tweet(rivr_conditions_dict):
-    """takes a dictionary of river condition observations, builds data into a tweet,
-    updates PupDB storage, monitors flooding condition and updates time between tweets
-    based on action level.
+    """takes a dictionary of river condition observations from 2 dams, 
+    builds data into a tweet,
+    updates PupDB storage, 
+    monitors flooding condition and updates time between tweets based on action level.
     """
     tweet = " "
-    # print(rivr_conditions_dict)
     # scan dictionary for latest observations
     latest_observations = []
     for line in rivr_conditions_dict.keys():
         if rivr_conditions_dict[line][0] == "Latest":
             latest_observations.append(rivr_conditions_dict[line])
-    #print(latest_observations[0])
-    #print("between")
-    #print(latest_observations[1])
+    logger.debug(str(latest_observations[0]))
+    logger.debug(str(latest_observations[1]))
     # gather needed numbers
     upriver_name = latest_observations[1][-3]
-    #print(upriver_name)
     upriver_level = float(latest_observations[1][3])
-    #print(upriver_level)
     upriver_milemrkr = float(latest_observations[1][-4])
-    #print(upriver_milemrkr)
     upriver_elevation = float(latest_observations[1][-2])
-    #print(upriver_elevation)
     dnriver_name = latest_observations[0][-3]
-    #print(dnriver_name)
     dnriver_level = float(latest_observations[0][3])
-    #print(dnriver_level)
     dnriver_milemrkr = float(latest_observations[0][-4])
-    #print(dnriver_milemrkr)
     dnriver_elevation = float(latest_observations[0][-2])
-    #print(dnriver_elevation)
     obsrv_datetime = latest_observations[0][-1]
-    #print(obsrv_datetime)
     # calculate bushmans level
     slope = upriver_level - dnriver_level
-    #print(slope)
     # correct for difference in elevation of guages
     elev_diff = upriver_elevation - dnriver_elevation
-    #print(elev_diff)
     slope = slope - elev_diff
-    #print(slope)
+    # determine pool size
     pool_length = dnriver_milemrkr - upriver_milemrkr
-    #print(pool_length)
+    # calculate an average slope for the pool
     per_mile_slope = slope / pool_length
-    print(per_mile_slope)
+    # calculate projected level
     projection = (
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
