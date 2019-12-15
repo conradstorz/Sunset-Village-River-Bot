@@ -1,4 +1,5 @@
-import "Sunset Village TwitterBot"
+from Sunset_Village_TwitterBot import test_tweet, defineLoggers
+from loguru import logger
 
-data = get_level_data()
-print(build_tweet(data))
+defineLoggers()
+print('tweet:', test_tweet())
