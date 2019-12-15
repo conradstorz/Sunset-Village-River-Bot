@@ -148,8 +148,8 @@ def processRiverData():
     for item in times:
         if results[item][0] in important:
             logger.info(saferepr(results[item]))
-    return results  # TODO define a dict of dams and important observations
-
+    return results
+    
 
 @logger.catch
 def defineLoggers():
