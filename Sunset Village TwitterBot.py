@@ -17,6 +17,7 @@ logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
+from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
 from pprint import saferepr
 from pprint import pprint
 
