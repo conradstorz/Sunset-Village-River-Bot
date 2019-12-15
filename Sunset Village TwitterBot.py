@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This is a twitterBot that will periodically tweet the projected river level at Bushman's Lake based on the 
-NWS website data for the river level both upstream and downstream then calculating the slope of the river
-to get the calculated level at our property. 
+""" This is a twitterBot that will periodically tweet the projected river level at Bushman's Lake
+based on the NWS website data for the river level both upstream and downstream then calculating 
+the slope of the river to get the calculated level at our property. 
 """
 
 import time
@@ -50,6 +50,25 @@ MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR  # in seconds
 from os import sys, path
 RUNTIME_NAME = path.basename(__file__)
 
+import logging
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        # Get corresponding Loguru level if it exists
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Find caller from where originated the logged message
+        frame, depth = logging.currentframe(), 2
+        while frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+
 
 @logger.catch
 def UpdatePrediction(twtr, tm, db):
@@ -57,7 +76,6 @@ def UpdatePrediction(twtr, tm, db):
     twtr = twython object for accessing Twitter
     tm = datetime obj representing current time
     db = PupDB obj for persistant storage on local machine
-    
     """
     MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
@@ -72,6 +90,8 @@ def UpdatePrediction(twtr, tm, db):
         waitTime = 0
         x = get_level()  # retrieve river level readings
         sp = saferepr(x)  # use pprint to serialize a version of the result
+        # rivers_dict = get_river_conditions_dict()
+        # tweet = build_tweet(rivers_dict)
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         logger.info("Tweet sent.")
@@ -93,14 +113,12 @@ def Main(credentials):
     a, b, c, d = credentials
     # establish the twitter access object
     twitter = Twython(a, b, c, d)
-
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
     storage_db = PupDB(PupDB_FILENAME)
     MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
     if MOST_RECENT_TWEET == None:  # Pre-load empty database
         storage_db.set(PupDB_MRTkey, str(TimeNow))
-
     while True:
         TimeNow = datetime.now()
         wait = UpdatePrediction(twitter, TimeNow, storage_db)
