@@ -54,29 +54,11 @@ from os import sys, path
 
 RUNTIME_NAME = path.basename(__file__)
 
-import logging
 
-
-class InterceptHandler(logging.Handler):
-    def emit(self, record):
-        # Get corresponding Loguru level if it exists
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
-
-        # Find caller from where originated the logged message
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
-
-
-logging.basicConfig(handlers=[InterceptHandler()], level=0)
+@logger.catch
+def test_tweet():
+    data = get_level_data()
+    return build_tweet(data)
 
 
 @logger.catch
@@ -86,36 +68,54 @@ def build_tweet(rivr_conditions_dict):
     based on action level.
     """
     tweet = " "
+    # print(rivr_conditions_dict)
     # scan dictionary for latest observations
     latest_observations = []
-    for line in rivr_conditions_dict:
-        if line[0] == "Latest":
-            latest_observations.append(line)
+    for line in rivr_conditions_dict.keys():
+        if rivr_conditions_dict[line][0] == "Latest":
+            latest_observations.append(rivr_conditions_dict[line])
+    #print(latest_observations[0])
+    #print("between")
+    #print(latest_observations[1])
     # gather needed numbers
     upriver_name = latest_observations[1][-3]
-    upriver_level = int(latest_observations[1][3])
-    upriver_milemrkr = int(latest_observations[1][-2])
+    #print(upriver_name)
+    upriver_level = float(latest_observations[1][3])
+    #print(upriver_level)
+    upriver_milemrkr = float(latest_observations[1][-4])
+    #print(upriver_milemrkr)
+    upriver_elevation = float(latest_observations[1][-2])
+    #print(upriver_elevation)
     dnriver_name = latest_observations[0][-3]
-    dnriver_level = int(latest_observations[0][3])
-    dnriver_milemrkr = int(latest_observations[0][-2])
+    #print(dnriver_name)
+    dnriver_level = float(latest_observations[0][3])
+    #print(dnriver_level)
+    dnriver_milemrkr = float(latest_observations[0][-4])
+    #print(dnriver_milemrkr)
+    dnriver_elevation = float(latest_observations[0][-2])
+    #print(dnriver_elevation)
     obsrv_datetime = latest_observations[0][-1]
+    #print(obsrv_datetime)
     # calculate bushmans level
     slope = upriver_level - dnriver_level
-    per_mile_slope = slope / (dnriver_milemrkr - upriver_milemrkr)
+    #print(slope)
+    # correct for difference in elevation of guages
+    elev_diff = upriver_elevation - dnriver_elevation
+    #print(elev_diff)
+    slope = slope - elev_diff
+    #print(slope)
+    pool_length = dnriver_milemrkr - upriver_milemrkr
+    #print(pool_length)
+    per_mile_slope = slope / pool_length
+    print(per_mile_slope)
     projection = (
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
     # build text of tweet
-    tweet.join(
-        "Latest Observation:",
-        obsrv_datetime,
-        upriver_name,
-        upriver_level,
-        dnriver_name,
-        dnriver_level,
-        "Calculated Level at Bushmans:",
-        projection,
-    )
+    t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
+    t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
+    t3 = f" Calculated Level at Bushmans: {projection:.2f}"
+    tweet = t1 + t2 + t3
     return tweet
 
 
