@@ -7,6 +7,7 @@ the level of the river at that point can be calculated.
 """
 
 from loguru import logger
+
 logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
@@ -100,18 +101,21 @@ def current_river_conditions(monitoring_point, dct):
         try:
             child_list = child.attrib["alt"].split()
             child_list.append(monitoring_point)
+            child_list.append(
+                RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
+            )
             logger.debug(
                 "=== root_map_child 'alt attrib' list: " + saferepr(child_list)
             )
             logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
-                child_date = searchdate[0][1]  # TODO append dt obj to child_list
-                date_iso = ISO_datestring(
-                    child_date, child_list
-                )  # TODO append datestr to child_list
+                child_date = searchdate[0][1]
+                date_iso = ISO_datestring(child_date, child_list)
+                child_list.append(date_iso)
                 logger.debug("datestamp search result:" + str(date_iso))
                 if date_iso in map_dict:
+                    # should only happen if two observations have the same datestamp
                     logger.debug("duplicate key!")  # TODO raise dupkey error
                     logger.debug(saferepr(child_list))
                 else:
