@@ -143,6 +143,7 @@ def build_tweet(rivr_conditions_dict):
     t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
     tweet = t1 + t2 + t3
+    logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
 
 
