@@ -12,6 +12,7 @@ from datetime import timedelta
 from dateutil import parser
 
 from loguru import logger
+
 logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
@@ -29,6 +30,7 @@ PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 ACTION_LABELS = ["First-action", "Minor-flood", "Moderate-flood", "Major-flood"]
 ACTION_LEVELS = [21, 23, 30, 38]
 ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
+LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
 
 """ flooding action levels for McAlpine dam upper guage in louisville
     "first-action": 21,
@@ -48,9 +50,12 @@ MAXIMUM_TWEETS_PER_HOUR = 0.2
 MINIMUM_TIME_BETWEEN_TWEETS = 3600 / MAXIMUM_TWEETS_PER_HOUR  # in seconds
 
 from os import sys, path
+
 RUNTIME_NAME = path.basename(__file__)
 
 import logging
+
+
 class InterceptHandler(logging.Handler):
     def emit(self, record):
         # Get corresponding Loguru level if it exists
@@ -65,9 +70,52 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage()
+        )
+
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+
+
+@logger.catch
+def build_tweet(rivr_conditions_dict):
+    """takes a dictionary of river condition observations, builds data into a tweet,
+    updates PupDB storage, monitors flooding condition and updates time between tweets
+    based on action level.
+    """
+    tweet = " "
+    # scan dictionary for latest observations
+    latest_observations = []
+    for line in rivr_conditions_dict:
+        if line[0] == "Latest":
+            latest_observations.append(line)
+    # gather needed numbers
+    upriver_name = latest_observations[1][-3]
+    upriver_level = int(latest_observations[1][3])
+    upriver_milemrkr = int(latest_observations[1][-2])
+    dnriver_name = latest_observations[0][-3]
+    dnriver_level = int(latest_observations[0][3])
+    dnriver_milemrkr = int(latest_observations[0][-2])
+    obsrv_datetime = latest_observations[0][-1]
+    # calculate bushmans level
+    slope = upriver_level - dnriver_level
+    per_mile_slope = slope / (dnriver_milemrkr - upriver_milemrkr)
+    projection = (
+        dnriver_milemrkr - LOCATION_OF_INTEREST
+    ) * per_mile_slope + dnriver_level
+    # build text of tweet
+    tweet.join(
+        "Latest Observation:",
+        obsrv_datetime,
+        upriver_name,
+        upriver_level,
+        dnriver_name,
+        dnriver_level,
+        "Calculated Level at Bushmans:",
+        projection,
+    )
+    return tweet
 
 
 @logger.catch
