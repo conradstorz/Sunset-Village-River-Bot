@@ -125,9 +125,7 @@ def Calclate_level(data, offset):
     down_river_guage = data[RIVER_GUAGE_NAMES[1]]
     slope = up_river_guage - down_river_guage
     per_mile_slope = slope / (LOCATION_OF_MCALPINE - LOCATION_OF_MARKLAND)
-    projection = (
-        LOCATION_OF_MCALPINE - LOCATION_OF_INTEREST
-    ) * per_mile_slope + down_river_guage
+    projection = (LOCATION_OF_MCALPINE - offset) * per_mile_slope + down_river_guage
     return projection
 
 
@@ -142,7 +140,9 @@ def calculated_Bushmans_river_level():
 
     projected_level_at_Bushmans = Calclate_level(river_levels, LOCATION_OF_INTEREST)
     # print("projected_level_at_Bushmans ", projected_level_at_Bushmans)
-    output.append("calculated_level_at_Bushmans " + saferepr(projected_level_at_Bushmans))
+    output.append(
+        "calculated_level_at_Bushmans " + saferepr(projected_level_at_Bushmans)
+    )
 
     return output
 
