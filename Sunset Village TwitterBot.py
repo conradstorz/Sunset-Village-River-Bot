@@ -98,7 +98,7 @@ def UpdatePrediction(twtr, tm, db):
         logger.debug("Tweet string = " + str(sp))
         for item in x:
             logger.info(item)
-        logger.info("Length of string = ", str(len(saferepr(x))))
+        logger.info("Length of string = " + str(len(sp)))
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
