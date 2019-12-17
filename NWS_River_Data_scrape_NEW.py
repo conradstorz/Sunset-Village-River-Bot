@@ -69,7 +69,8 @@ DAMS = list(RIVER_MONITORING_POINTS.keys())
 def ISO_datestring(dt, cl):
     """ Convert a DateTime object to an ISO datestring.
     also fix an error in the conversion
-    .isoformat() returns 12:00:00 for both Noon and Midnight
+    .isoformat() returns 12:00:00 for both Noon and Midnight.
+    Also trim date to report only date, hours and minutes.
     """
     isodatestr = dt.isoformat()
     if (
