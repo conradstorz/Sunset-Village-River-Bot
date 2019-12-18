@@ -17,6 +17,8 @@ LOGGING_LEVEL = "INFO"
 
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from NWS_River_Data_scrape_NEW import processRiverData as get_level_data, RIVER_MONITORING_POINTS
+from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
+from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
 from pprint import saferepr
 from pprint import pprint
 
@@ -113,8 +115,38 @@ def build_tweet(rivr_conditions_dict):
     for line in rivr_conditions_dict.keys():
         if rivr_conditions_dict[line][0] == "Latest":
             latest_observations.append(rivr_conditions_dict[line])
-    logger.debug(str(latest_observations[0]))
-    logger.debug(str(latest_observations[1]))
+    logger.debug('latest[0]:' + str(latest_observations[0]))
+    logger.debug('latest[1]:' + str(latest_observations[1]))
+    # scan dictionary for Forecast observations
+    forecast_observations = []
+    forecast_dict = {}
+    for line in rivr_conditions_dict.keys():
+        if rivr_conditions_dict[line][0] == "Highest":
+            forecast_observations.append(rivr_conditions_dict[line])
+    # scan results
+    for index, line in enumerate(forecast_observations):
+        # report findings to DEBUG logger    
+        logger.debug(f'forecast[{index}]:{str(forecast_observations[index])}')
+        # isolate the highest forecast for each dam
+        dam_name = forecast_observations[index][-3]
+        if dam_name not in forecast_dict:
+            forecast_dict[dam_name] = forecast_observations[index]
+        else:
+            # check to see if this forecast is higher than the one already located
+            level1 = float(forecast_observations[index][2])
+            dam_details = forecast_dict[dam_name]
+            level2 = float(dam_details[2])
+            if level1 > level2:
+                # it is so replace the lower one
+                forecast_dict[dam_name] = forecast_observations
+    for key in forecast_dict.keys():
+        logger.debug(f'forecast[{key}]:{str(forecast_dict[key])}')
+        level_forecast = float(forecast_dict[key][2])
+        if key == UPRIVERDAM:
+            upriver_forecast = level_forecast
+        if key == DNRIVERDAM:
+            dnriver_forecast = level_forecast
+        forecast_timestamp = forecast_dict[key][-1]
     # gather needed numbers
     upriver_name = latest_observations[1][-3]
     upriver_level = float(latest_observations[1][3])
@@ -125,7 +157,7 @@ def build_tweet(rivr_conditions_dict):
     dnriver_milemrkr = float(latest_observations[0][-4])
     dnriver_elevation = float(latest_observations[0][-2])
     obsrv_datetime = latest_observations[0][-1]
-    # calculate bushmans level
+    # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
     # correct for difference in elevation of guages
     elev_diff = upriver_elevation - dnriver_elevation
@@ -138,11 +170,24 @@ def build_tweet(rivr_conditions_dict):
     projection = (
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
+    # calculate bushmans level forecast to occur soon
+    forecast_slope = upriver_forecast - dnriver_forecast
+    forecast_slope = forecast_slope - elev_diff
+    # calculate an average slope for the pool
+    forecast_per_mile_slope = forecast_slope / pool_length
+    # calculate projected level
+    forecast_projection = (
+        dnriver_milemrkr - LOCATION_OF_INTEREST
+    ) * forecast_per_mile_slope + dnriver_forecast
     # build text of tweet
     t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
     t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
-    tweet = t1 + t2 + t3
+    t4 = f" ::: Latest Forecast: {forecast_timestamp} {upriver_name}"
+    t5 = f" {upriver_forecast} {dnriver_name} {dnriver_forecast}"
+    t6 = f" Calculated Level at Bushmans: {forecast_projection:.2f}"    
+    tweet = t1 + t2 + t3 + t4 + t5 + t6
+    logger.debug(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
 
