@@ -121,25 +121,25 @@ def build_tweet(rivr_conditions_dict):
     # scan dictionary for Forecast observations
     forecast_observations = []
     forecast_dict = {}
-    for line in rivr_conditions_dict.keys():
-        if rivr_conditions_dict[line][0] == "Highest":
-            forecast_observations.append(rivr_conditions_dict[line])
+    for key in rivr_conditions_dict.keys():
+        if rivr_conditions_dict[key][0] == "Highest":
+            forecast_observations.append(rivr_conditions_dict[key])
     # scan results
-    for index, line in enumerate(forecast_observations):
+    for index, item in enumerate(forecast_observations):
         # report findings to DEBUG logger    
-        logger.debug(f'forecast[{index}]:{str(forecast_observations[index])}')
+        logger.debug(f'forecast[{index}]:{str(item)}')
         # isolate the highest forecast for each dam
-        dam_name = forecast_observations[index][-3]
+        dam_name = item[-3]
         if dam_name not in forecast_dict:
-            forecast_dict[dam_name] = forecast_observations[index]
+            forecast_dict[dam_name] = item
         else:
             # check to see if this forecast is higher than the one already located
-            level1 = float(forecast_observations[index][2])
+            level1 = float(item[2])
             dam_details = forecast_dict[dam_name]
             level2 = float(dam_details[2])
             if level1 > level2:
                 # it is so replace the lower one
-                forecast_dict[dam_name] = forecast_observations
+                forecast_dict[dam_name] = item
     for key in forecast_dict.keys():
         logger.debug(f'forecast[{key}]:{str(forecast_dict[key])}')
         level_forecast = float(forecast_dict[key][2])
@@ -188,7 +188,7 @@ def build_tweet(rivr_conditions_dict):
     t5 = f" {dnriver_name} {dnriver_forecast}"
     t6 = f" Calculated future Level at Bushmans: {forecast_projection:.2f} {forecast_timestamp}"    
     tweet = t1 + t2 + t3 + t4 + t5 + t6
-    logger.debug(tweet)
+    logger.info(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
 
