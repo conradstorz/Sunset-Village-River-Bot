@@ -183,9 +183,9 @@ def build_tweet(rivr_conditions_dict):
     t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
     t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
-    t4 = f" ::: Latest Forecast: {forecast_timestamp} {upriver_name}"
-    t5 = f" {upriver_forecast} {dnriver_name} {dnriver_forecast}"
-    t6 = f" Calculated Level at Bushmans: {forecast_projection:.2f}"    
+    t4 = f" ::: Latest Forecast: {upriver_name} {upriver_forecast}"
+    t5 = f" {dnriver_name} {dnriver_forecast}"
+    t6 = f" Calculated future Level at Bushmans: {forecast_projection:.2f} {forecast_timestamp}"    
     tweet = t1 + t2 + t3 + t4 + t5 + t6
     logger.debug(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
