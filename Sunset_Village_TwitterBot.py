@@ -88,7 +88,7 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
         message = build_tweet(river_dict)
         # send tweet
         send_tweet(message, twttr)
-        db.set(PupDB_MRTkey, str(tm))       
+        pdb.set(PupDB_MRTkey, str(tm))       
     # update action level
     current_action = pdb.get(PupDB_ACTIONkey)
     most_recent_level = pdb.get(PupDB_MRLkey)
@@ -97,7 +97,7 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
             level = RIVER_MONITORING_POINTS[dam][action]
             if level <= most_recent_level:
                 current_action = action
-    db.set(PupDB_MRLkey, str(current_action))
+    pdb.set(PupDB_MRLkey, str(current_action))
     # return time to next tweet
     logger.info("Too soon to tweet.")
     waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
@@ -210,15 +210,19 @@ def UpdatePrediction(twtr, tm, db):
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         logger.info("Tweeting...")
         waitTime = 0
-        x = get_level()  # retrieve river level readings
-        sp = saferepr(x)  # use pprint to serialize a version of the result
+        # x = get_level()  # retrieve river level readings
+        # sp = saferepr(x)  # use pprint to serialize a version of the result
+        # 12-17-2019 using new method
+        data = get_level_data()
+        sp = build_tweet(data)        
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         logger.info("Tweet sent.")
         logger.debug("Tweet string = " + str(sp))
-        for item in x:
-            logger.info(item)
-        logger.info("Length of string = " + str(len(sp)))
+        # 12-17-2019 new method logs this in the build tweet routine
+        # for item in x:
+        #     logger.info(item)
+        # logger.info("Length of string = " + str(len(sp)))
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
