@@ -111,6 +111,11 @@ def build_tweet(rivr_conditions_dict):
     """takes a dictionary of river condition observations from 2 dams and builds data into a tweet,
     """
     tweet = " "
+    
+    #TODO put these data gathering functions in seperate functions and return named tuples of results
+    #TODO (damname,observationtype,timestamp,level)
+    #TODO organize data as: currentobservation,highestforecast,eventualforecast)
+
     # scan dictionary for latest observations
     latest_observations = []
     for line in rivr_conditions_dict.keys():
@@ -186,8 +191,9 @@ def build_tweet(rivr_conditions_dict):
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
     t4 = f" ::: Latest Forecast: {upriver_name} {upriver_forecast}"
     t5 = f" {dnriver_name} {dnriver_forecast}"
-    t6 = f" Calculated future Level at Bushmans: {forecast_projection:.2f} {forecast_timestamp}"    
-    tweet = t1 + t2 + t3 + t4 + t5 + t6
+    t6 = f" Calculated future Level at Bushmans:"
+    t7 = f" {forecast_projection:.2f} {forecast_timestamp}"    
+    tweet = t1 + t2 + t3 + t4 + t5 + t6 + t7
     logger.info(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
