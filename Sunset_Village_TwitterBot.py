@@ -217,19 +217,13 @@ def UpdatePrediction(twtr, tm, db):
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         logger.info("Tweeting...")
         waitTime = 0
-        # x = get_level()  # retrieve river level readings
-        # sp = saferepr(x)  # use pprint to serialize a version of the result
-        # 12-17-2019 using new method
         data = get_level_data()
         sp = build_tweet(data)        
+        # place tweet time into longterm storage
         db.set(PupDB_MRTkey, str(tm))
         twtr.update_status(status=sp)
         logger.info("Tweet sent.")
         logger.debug("Tweet string = " + str(sp))
-        # 12-17-2019 new method logs this in the build tweet routine
-        # for item in x:
-        #     logger.info(item)
-        # logger.info("Length of string = " + str(len(sp)))
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
