@@ -3,7 +3,7 @@
 """
 testing git credentials
  
- #TODO make the frequency go up when flooding is significant. Use the action levels of McAlpine dam as indicators of needed frequency
+ #TODO make the frequency go up when flooding is significant. Use the action levels of Markland dam as indicators of needed frequency
 
  
  #TODO make twittrbot interactive with users by allowing them to tweet a mile marker they want monitored and add it to the outgoing tweets for a period of 30 days. must be between markland and mcalpine for this bot.
