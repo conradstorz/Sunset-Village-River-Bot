@@ -141,7 +141,8 @@ def current_river_conditions(monitoring_point, dct):
 
 @logger.catch
 def processRiverData():
-    """get current data from NOAA website and return conditions including flood action levels
+    """get current data from NOAA website.
+    Organize data as dictionary keyed by timestamps+damname.
     """
     logger.info("Program Start: " + RUNTIME_NAME)
     results = {}
@@ -150,10 +151,12 @@ def processRiverData():
     times = list(results.keys())
     times = sorted(times)
     important = ["Forecast:", "Latest", "Highest"]
+    output = {}
     for item in times:
         if results[item][0] in important:
             logger.debug(saferepr(results[item]))
-    return results
+            output[item] = results[item]
+    return output
 
 
 @logger.catch
