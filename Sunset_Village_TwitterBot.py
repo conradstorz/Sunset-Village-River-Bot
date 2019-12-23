@@ -198,7 +198,7 @@ def build_tweet(rivr_conditions_dict):
     t7 = f" {forecast_projection:.2f} {forecast_timestamp}"    
     tweet = t1 + t2 + t3 + t4 + t5 + t6 + t7
     """
-    tweet = t1 + t2 + t3 + 'Data source: http://portky.com/river.php'
+    tweet = t1 + t2 + t3 + ' ::: Data source: http://portky.com/river.php'
     logger.info(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
