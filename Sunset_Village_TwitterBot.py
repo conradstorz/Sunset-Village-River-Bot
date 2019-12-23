@@ -115,6 +115,12 @@ def build_tweet(rivr_conditions_dict):
     #TODO put these data gathering functions in seperate functions and return named tuples of results
     #TODO (damname,observationtype,timestamp,level)
     #TODO organize data as: currentobservation,highestforecast,eventualforecast)
+    """
+    from collections import namedtuple
+
+    Task = namedtuple('DamData', ['DamName', 'obsv_type', 'timestamp', 'level'])
+    Task.__new__.__defaults__ = (None, None, None, None)
+    """
 
     # scan dictionary for latest observations
     latest_observations = []
