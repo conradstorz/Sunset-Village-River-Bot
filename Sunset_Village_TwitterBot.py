@@ -137,6 +137,7 @@ def build_tweet(rivr_conditions_dict):
         dam_name = item[-3]
         if dam_name not in forecast_dict:
             forecast_dict[dam_name] = item
+            logger.debug('forecast update:' + str(item))            
         else:
             # check to see if this forecast is higher than the one already located
             level1 = float(item[2])
@@ -145,6 +146,7 @@ def build_tweet(rivr_conditions_dict):
             if level1 > level2:
                 # it is so replace the lower one
                 forecast_dict[dam_name] = item
+                logger.debug('forecast update:' + str(item))
     for key in forecast_dict.keys():
         logger.debug(f'forecast[{key}]:{str(forecast_dict[key])}')
         level_forecast = float(forecast_dict[key][2])
@@ -152,7 +154,7 @@ def build_tweet(rivr_conditions_dict):
             upriver_forecast = level_forecast
         if key == DNRIVERDAM:
             dnriver_forecast = level_forecast
-        forecast_timestamp = forecast_dict[key][-1]
+            forecast_timestamp = forecast_dict[key][-1]
     # gather needed numbers
     upriver_name = latest_observations[1][-3]
     upriver_level = float(latest_observations[1][3])
@@ -189,11 +191,14 @@ def build_tweet(rivr_conditions_dict):
     t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
     t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
+    """
     t4 = f" ::: Latest Forecast: {upriver_name} {upriver_forecast}"
     t5 = f" {dnriver_name} {dnriver_forecast}"
     t6 = f" Calculated future Level at Bushmans:"
     t7 = f" {forecast_projection:.2f} {forecast_timestamp}"    
     tweet = t1 + t2 + t3 + t4 + t5 + t6 + t7
+    """
+    tweet = t1 + t2 + t3
     logger.info(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
     return tweet
