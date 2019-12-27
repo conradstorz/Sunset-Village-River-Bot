@@ -98,7 +98,7 @@ def current_river_conditions(monitoring_point, dct):
     tree = ET.fromstring(str(map_raw), parser=parser_engine)
     root = tree.getroottree()
     root_map = root.getroot()
-    logger.info("map name: " + saferepr(root_map.attrib["name"]))
+    logger.debug("map name: " + saferepr(root_map.attrib["name"]))
     map_dict = dct
     for child in root_map:
         logger.debug("root_map_child tag: " + saferepr(child.tag))

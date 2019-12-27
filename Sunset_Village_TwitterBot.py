@@ -56,7 +56,7 @@ RUNTIME_NAME = path.basename(__file__)
 def test_tweet():
     data = get_level_data()
     # data contains ALL "imortant" levels
-    logger.info(str(data))
+    logger.debug(str(data))
     #TODO create function to extract only 6 most relevent current,highest,eventual levels
     return build_tweet(data)
 
@@ -135,7 +135,7 @@ def build_tweet(rivr_conditions_dict):
         logger.error('More than 2 latest observatioons in webscrape. Only 2 expected.')
     logger.debug('latest[0]:' + str(latest_observations[0]))
     logger.debug('latest[1]:' + str(latest_observations[1]))
-    for index, item in enumerate(latest_observations):
+    for _, item in enumerate(latest_observations):
         dam_name = item[-3]
         if dam_name not in latest_dict:
             latest_dict[dam_name] = item
