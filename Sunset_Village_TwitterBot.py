@@ -55,6 +55,9 @@ RUNTIME_NAME = path.basename(__file__)
 @logger.catch
 def test_tweet():
     data = get_level_data()
+    # data contains ALL "imortant" levels
+    logger.info(str(data))
+    #TODO create function to extract only 6 most relevent current,highest,eventual levels
     return build_tweet(data)
 
 
@@ -108,7 +111,7 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
 
 @logger.catch
 def build_tweet(rivr_conditions_dict):
-    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet,
+    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
     """
     tweet = " "
     
@@ -124,53 +127,37 @@ def build_tweet(rivr_conditions_dict):
 
     # scan dictionary for latest observations
     latest_observations = []
+    latest_dict = {}
     for line in rivr_conditions_dict.keys():
         if rivr_conditions_dict[line][0] == "Latest":
             latest_observations.append(rivr_conditions_dict[line])
+    if len(latest_observations) > 2:
+        logger.error('More than 2 latest observatioons in webscrape. Only 2 expected.')
     logger.debug('latest[0]:' + str(latest_observations[0]))
     logger.debug('latest[1]:' + str(latest_observations[1]))
-    # scan dictionary for Forecast observations
-    forecast_observations = []
-    forecast_dict = {}
-    for key in rivr_conditions_dict.keys():
-        if rivr_conditions_dict[key][0] == "Highest":
-            forecast_observations.append(rivr_conditions_dict[key])
-    # scan results
-    for index, item in enumerate(forecast_observations):
-        # report findings to DEBUG logger    
-        logger.debug(f'forecast[{index}]:{str(item)}')
-        # isolate the highest forecast for each dam
+    for index, item in enumerate(latest_observations):
         dam_name = item[-3]
-        if dam_name not in forecast_dict:
-            forecast_dict[dam_name] = item
-            logger.debug('forecast update:' + str(item))            
-        else:
-            # check to see if this forecast is higher than the one already located
-            level1 = float(item[2])
-            dam_details = forecast_dict[dam_name]
-            level2 = float(dam_details[2])
-            if level1 > level2:
-                # it is so replace the lower one
-                forecast_dict[dam_name] = item
-                logger.debug('forecast update:' + str(item))
-    for key in forecast_dict.keys():
-        logger.debug(f'forecast[{key}]:{str(forecast_dict[key])}')
-        level_forecast = float(forecast_dict[key][2])
-        if key == UPRIVERDAM:
-            upriver_forecast = level_forecast
-        if key == DNRIVERDAM:
-            dnriver_forecast = level_forecast
-            forecast_timestamp = forecast_dict[key][-1]
+        if dam_name not in latest_dict:
+            latest_dict[dam_name] = item
+
     # gather needed numbers
-    upriver_name = latest_observations[1][-3]
-    upriver_level = float(latest_observations[1][3])
-    upriver_milemrkr = float(latest_observations[1][-4])
-    upriver_elevation = float(latest_observations[1][-2])
-    dnriver_name = latest_observations[0][-3]
-    dnriver_level = float(latest_observations[0][3])
-    dnriver_milemrkr = float(latest_observations[0][-4])
-    dnriver_elevation = float(latest_observations[0][-2])
-    obsrv_datetime = latest_observations[0][-1]
+    for key in latest_dict.keys():
+        logger.debug(f'latest[{key}]:{str(latest_dict[key])}')
+        level_obsrvd = float(latest_dict[key][3])
+        milemrkr = float(latest_dict[key][-4])
+        elevate = float(latest_dict[key][-2])
+        if key == UPRIVERDAM:
+            upriver_name = key
+            upriver_level = level_obsrvd
+            upriver_milemrkr = milemrkr
+            upriver_elevation = elevate
+        if key == DNRIVERDAM:
+            dnriver_name = key
+            dnriver_level = level_obsrvd
+            dnriver_milemrkr = milemrkr
+            dnriver_elevation = elevate
+            obsrv_datetime = latest_dict[key][-1]  
+
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
     # correct for difference in elevation of guages
@@ -184,26 +171,10 @@ def build_tweet(rivr_conditions_dict):
     projection = (
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
-    # calculate bushmans level forecast to occur soon
-    forecast_slope = upriver_forecast - dnriver_forecast
-    forecast_slope = forecast_slope - elev_diff
-    # calculate an average slope for the pool
-    forecast_per_mile_slope = forecast_slope / pool_length
-    # calculate projected level
-    forecast_projection = (
-        dnriver_milemrkr - LOCATION_OF_INTEREST
-    ) * forecast_per_mile_slope + dnriver_forecast
     # build text of tweet
     t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
     t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
-    """
-    t4 = f" ::: Latest Forecast: {upriver_name} {upriver_forecast}"
-    t5 = f" {dnriver_name} {dnriver_forecast}"
-    t6 = f" Calculated future Level at Bushmans:"
-    t7 = f" {forecast_projection:.2f} {forecast_timestamp}"    
-    tweet = t1 + t2 + t3 + t4 + t5 + t6 + t7
-    """
     tweet = t1 + t2 + t3 + ' ::: Data source: http://portky.com/river.php'
     logger.info(tweet)
     logger.info(f'Length of Tweet {len(tweet)} characters.')
