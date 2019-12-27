@@ -61,6 +61,7 @@ def test_tweet():
     return build_tweet(data)
 
 
+'''
 @logger.catch
 def send_tweet(tweet, twttr):
     twttr.update_status(status=tweet)
@@ -107,7 +108,7 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
     waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
     logger.info("Recommend waiting " + str(waitTime) + " seconds.")
     return waitTime
-
+'''
 
 @logger.catch
 def build_tweet(rivr_conditions_dict):
