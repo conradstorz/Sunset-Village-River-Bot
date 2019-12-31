@@ -11,10 +11,6 @@ from datetime import datetime, timezone
 from datetime import timedelta
 from dateutil import parser
 
-from loguru import logger
-logger.remove()  # stop any default logger
-LOGGING_LEVEL = "INFO"
-
 from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
 from NWS_River_Data_scrape_NEW import RIVER_MONITORING_POINTS
@@ -24,7 +20,6 @@ from pprint import saferepr
 from pprint import pprint
 
 from pupdb.core import PupDB
-
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
@@ -35,28 +30,32 @@ TWEET_FREQUENCY = [18000, 9000, 4000, 2000, 1000] # delay time in seconds
 #ACTION_LEVELS = [21, 23, 30, 38]
 #ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
-
+OBSERVATION_TAGS = ['Latest', 'Highest']
 
 from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
 from TwitterCredentials import APP_SECRET
 from TwitterCredentials import OAUTH_TOKEN
 from TwitterCredentials import OAUTH_TOKEN_SECRET
-
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-#MAXIMUM_TWEETS_PER_HOUR = 0.2
+
+#Time between tweets decreases as flooding increases
 MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[0]
 
 from os import sys, path
-
 RUNTIME_NAME = path.basename(__file__)
+
+from loguru import logger
+logger.remove()  # stop any default logger
+LOGGING_LEVEL = "INFO"
+
 
 
 @logger.catch
 def test_tweet():
     data = get_level_data()
     # data contains ALL "imortant" levels
-    logger.debug(str(data))
+    #logger.debug(str(data))
     #TODO create function to extract only 6 most relevent current,highest,eventual levels
     return build_tweet(data)
 
@@ -111,6 +110,38 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
 '''
 
 @logger.catch
+def sanitize(itm):
+    """ Observations from NOAA have a format discrepacy between 'Latest' entries
+    and all other forms of entry. This function looks for those entries and
+    'Standardizes' them.
+    """
+    sani = itm
+    if itm[0] == 'Latest':
+        logger.debug(itm)
+        tail = itm[3:]
+        sani = [itm[0], 'Observation:']
+        for i in tail:
+            sani.append(i)
+        logger.debug(sani)
+    return sani
+
+
+@logger.catch
+def extract_data(map_data, lbl_str):
+    """ take the 'map' data dict and extract entries matching supplied label.
+    We know the 'map' contains entries of observations and forecasts. Each entry
+    has the name of the dam as the ast item three from the end of the line.
+    """
+    # scan dictionary for specified observations
+    observations = {}
+    for line in map_data.keys():
+        if map_data[line][0] == lbl_str:
+            key = f'{map_data[line][-3]}{map_data[line][-1]}'
+            observations[key] = (sanitize(map_data[line]))
+    return observations
+
+
+@logger.catch
 def build_tweet(rivr_conditions_dict):
     """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
     """
@@ -125,39 +156,28 @@ def build_tweet(rivr_conditions_dict):
     Task = namedtuple('DamData', ['DamName', 'obsv_type', 'timestamp', 'level'])
     Task.__new__.__defaults__ = (None, None, None, None)
     """
-
-    # scan dictionary for latest observations
-    latest_observations = []
     latest_dict = {}
-    for line in rivr_conditions_dict.keys():
-        if rivr_conditions_dict[line][0] == "Latest":
-            latest_observations.append(rivr_conditions_dict[line])
-    if len(latest_observations) > 2:
-        logger.error('More than 2 latest observatioons in webscrape. Only 2 expected.')
-    logger.debug('latest[0]:' + str(latest_observations[0]))
-    logger.debug('latest[1]:' + str(latest_observations[1]))
-    for _, item in enumerate(latest_observations):
-        dam_name = item[-3]
-        if dam_name not in latest_dict:
-            latest_dict[dam_name] = item
-
-    # gather needed numbers
+    for lbl in OBSERVATION_TAGS:
+        latest_dict.update(extract_data(rivr_conditions_dict, lbl))
+    #logger.debug(latest_dict)
+    # gather Latest numbers
     for key in latest_dict.keys():
-        logger.debug(f'latest[{key}]:{str(latest_dict[key])}')
-        level_obsrvd = float(latest_dict[key][3])
-        milemrkr = float(latest_dict[key][-4])
-        elevate = float(latest_dict[key][-2])
-        if key == UPRIVERDAM:
-            upriver_name = key
-            upriver_level = level_obsrvd
-            upriver_milemrkr = milemrkr
-            upriver_elevation = elevate
-        if key == DNRIVERDAM:
-            dnriver_name = key
-            dnriver_level = level_obsrvd
-            dnriver_milemrkr = milemrkr
-            dnriver_elevation = elevate
-            obsrv_datetime = latest_dict[key][-1]  
+        logger.debug(f'Entry[{key}]:{str(latest_dict[key])}')
+        if latest_dict[key][0] == 'Latest':
+            level_obsrvd = float(latest_dict[key][2])
+            milemrkr = float(latest_dict[key][-4])
+            elevate = float(latest_dict[key][-2])
+            if latest_dict[key][-3] == UPRIVERDAM:
+                upriver_name = key
+                upriver_level = level_obsrvd
+                upriver_milemrkr = milemrkr
+                upriver_elevation = elevate
+            if latest_dict[key][-3] == DNRIVERDAM:
+                dnriver_name = key
+                dnriver_level = level_obsrvd
+                dnriver_milemrkr = milemrkr
+                dnriver_elevation = elevate
+                obsrv_datetime = latest_dict[key][-1]  
 
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
@@ -173,8 +193,8 @@ def build_tweet(rivr_conditions_dict):
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
     # build text of tweet
-    t1 = f"Latest Observation: {obsrv_datetime} {upriver_name}"
-    t2 = f" {upriver_level} {dnriver_name} {dnriver_level}"
+    t1 = f"Latest Observation: {upriver_name} {upriver_level}"
+    t2 = f" {dnriver_name} {dnriver_level}"
     t3 = f" Calculated Level at Bushmans: {projection:.2f}"
     tweet = t1 + t2 + t3 + ' ::: Data source: http://portky.com/river.php'
     logger.info(tweet)
