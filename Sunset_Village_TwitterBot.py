@@ -69,7 +69,6 @@ def test_tweet():
     return build_tweet(data)
 
 
-
 @logger.catch
 def send_tweet(db, tm, tweet, twttr):
     """Accept a datetime object, a tweet string and a Twython object. Place tweet and updtae filesystem storage to reflect activities.
@@ -102,10 +101,7 @@ def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
         logger.info("Tweeting...")
         waitTime = 0
         # build tweet
-        message = build_tweet(river_dict)
-        # send tweet
-        send_tweet(message, twttr)
-        pdb.set(PupDB_MRTkey, str(tm))       
+        send_tweet(db, tm, sp, twtr)
     # update action level
     current_action = pdb.get(PupDB_ACTIONkey)
     most_recent_level = pdb.get(PupDB_MRLkey)
@@ -144,7 +140,7 @@ def sanitize(itm):
 def extract_data(map_data, lbl_str):
     """ take the 'map' data dict and extract entries matching supplied label.
     We know the 'map' contains entries of observations and forecasts. Each entry
-    has the name of the dam as the ast item three from the end of the line.
+    has the name of the dam as the last item three from the end of the line.
     """
     # scan dictionary for specified observations
     observations = {}
@@ -156,41 +152,64 @@ def extract_data(map_data, lbl_str):
 
 
 @logger.catch
-def build_tweet(rivr_conditions_dict):
-    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
+def extract_forecast(obsv_data):
+    """ take the 'obsv' data dict and extract entries matching forecast predictions.
+    We know the 'obsv' contains entries of observations and forecasts. Each entry
+    has the name of the dam as the last item three from the end of the line.
+    We want one prediction for each dam.
     """
-    tweet = " "
-    # TODO put these data gathering functions in seperate functions and return named tuples of results
-    # TODO (damname,observationtype,timestamp,level)
-    # TODO organize data as: currentobservation,highestforecast,eventualforecast)
-    """
-    from collections import namedtuple
+    # scan dictionary for specified observations
+    observations = {}
+    for line in obsv_data.keys():
+        damname = obsv_data[line][-3]
+        if obsv_data[line][1] == 'Forecast:':
+            if damname not in observations.keys():
+                observations[damname] = obsv_data[line]
+                logger.debug('Forecast line:')
+                logger.debug(observations[damname])
+    return observations
 
-    Task = namedtuple('DamData', ['DamName', 'obsv_type', 'timestamp', 'level'])
-    Task.__new__.__defaults__ = (None, None, None, None)
-    """
-    latest_dict = {}
-    for lbl in OBSERVATION_TAGS:
-        latest_dict.update(extract_data(rivr_conditions_dict, lbl))
-    # logger.debug(latest_dict)
-    # gather Latest numbers
-    for key in latest_dict.keys():
-        logger.debug(f"Entry[{key}]:{str(latest_dict[key])}")
-        if latest_dict[key][0] == "Latest":
-            level_obsrvd = float(latest_dict[key][2])
-            milemrkr = float(latest_dict[key][-4])
-            elevate = float(latest_dict[key][-2])
-            if latest_dict[key][-3] == UPRIVERDAM:
-                upriver_name = key
-                upriver_level = level_obsrvd
-                upriver_milemrkr = milemrkr
-                upriver_elevation = elevate
-            if latest_dict[key][-3] == DNRIVERDAM:
-                dnriver_name = key
-                dnriver_level = level_obsrvd
-                dnriver_milemrkr = milemrkr
-                dnriver_elevation = elevate
 
+@logger.catch
+def extract_latest(obsv_data):
+    """ take the 'obsv' data dict and extract entries matching latest predictions.
+    We know the 'obsv' contains entries of observations and forecasts. Each entry
+    has the name of the dam as the last item three from the end of the line.
+    We want one observation of the latest level for each dam.
+    """
+    # scan dictionary for specified observations
+    observations = {}
+    logger.debug('Scanning for latest observations:')
+    for line in obsv_data.keys():
+        logger.debug(obsv_data[line])
+        damname = obsv_data[line][-3]
+        if obsv_data[line][0] == 'Latest':
+            if damname not in observations.keys():
+                observations[damname] = obsv_data[line]
+                logger.debug('Latest line:')
+                logger.debug(observations[damname])
+    return observations
+
+
+@logger.catch
+def assemble_text(dict_data):
+    for key in dict_data.keys():
+        logger.debug('assemble tweet input line:')
+        logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
+        dt = dict_data[key][-1]
+        level_obsrvd = float(dict_data[key][2])
+        milemrkr = float(dict_data[key][-4])
+        elevate = float(dict_data[key][-2])
+        if dict_data[key][-3] == UPRIVERDAM:
+            upriver_name = f'{key}{dt}'
+            upriver_level = level_obsrvd
+            upriver_milemrkr = milemrkr
+            upriver_elevation = elevate
+        if dict_data[key][-3] == DNRIVERDAM:
+            dnriver_name = f'{key}{dt}'
+            dnriver_level = level_obsrvd
+            dnriver_milemrkr = milemrkr
+            dnriver_elevation = elevate
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
     # correct for difference in elevation of guages
@@ -205,12 +224,41 @@ def build_tweet(rivr_conditions_dict):
         dnriver_milemrkr - LOCATION_OF_INTEREST
     ) * per_mile_slope + dnriver_level
     # build text of tweet
-    t1 = f"Latest Observation: {upriver_name} {upriver_level}"
-    t2 = f" {dnriver_name} {dnriver_level}"
-    t3 = f" Calculated Level at Bushmans: {projection:.2f}"
+    t1 = f"Latest Observation: {upriver_name} {upriver_level}ft"
+    t2 = f" {dnriver_name} {dnriver_level}ft"
+    t3 = f" Calculated Level at Bushmans: {projection:.2f}ft"
     tweet = t1 + t2 + t3 + " ::: Data source: http://portky.com/river.php"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
+    return tweet
+
+
+@logger.catch
+def build_tweet(rivr_conditions_dict):
+    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
+    """
+    tweet = " "
+    # TODO put these data gathering functions in seperate functions and return named tuples of results
+    # TODO (damname,observationtype,timestamp,level)
+    # TODO organize data as: currentobservation,highestforecast,eventualforecast)
+    """
+    from collections import namedtuple
+
+    Event = namedtuple('DamData', ['DamName', 'ObsvType', 'TimeStamp', 'Level'])
+    Event.__new__.__defaults__ = (None, None, None, None)
+    E1 = Event()
+    E2 = Event('McAlpine', 'Forecast', TimeNow(), '12.98')
+    assert E2.DamName == 'McAlpine'
+    assert E1.DamName == None
+    """
+    obsv_dict = {}
+    for lbl in OBSERVATION_TAGS:
+        obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
+    #extract 1 latest observation for each dam
+    latest_dict = extract_latest(obsv_dict)
+    #extract 1 forecast level for each dam
+    forecast_dict = extract_forecast(obsv_dict)
+    tweet = assemble_text(latest_dict)
     return tweet
 
 
