@@ -81,43 +81,6 @@ def send_tweet(db, tm, tweet, twttr):
     logger.info("Length of string = " + str(len(tweet)))
     return True
 
-'''
-@logger.catch
-def check_if_time_to_tweet(river_dict, tm, twttr, pdb):
-    """ Check if it is time to tweet
-    updates PupDB storage, 
-    monitors flooding condition and updates time between tweets based on action level.
-    """
-    # check time
-    MOST_RECENT_TWEET = pdb.get(PupDB_MRTkey)  # recover string repr of datetime obj
-    prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
-    # check tm against minimum tweet time
-    logger.info("Time now: " + str(tm))
-    logger.info("Previous Tweet time: " + str(prevTweet))
-    elapsed = tm - prevTweet  # returns a timedelta object
-    logger.info("Time since last Tweet: " + str(elapsed))
-    logger.info("Total number of seconds elapsed: " + str(elapsed.total_seconds()))
-    if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
-        logger.info("Tweeting...")
-        waitTime = 0
-        # build tweet
-        send_tweet(db, tm, sp, twtr)
-    # update action level
-    current_action = pdb.get(PupDB_ACTIONkey)
-    most_recent_level = pdb.get(PupDB_MRLkey)
-    for action in ACTION_LABELS:
-        for dam in RIVER_MONITORING_POINTS.keys():
-            level = RIVER_MONITORING_POINTS[dam][action]
-            if level <= most_recent_level:
-                current_action = action
-    pdb.set(PupDB_MRLkey, str(current_action))
-    # return time to next tweet
-    logger.info("Too soon to tweet.")
-    waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
-    logger.info("Recommend waiting " + str(waitTime) + " seconds.")
-    return waitTime
-'''
-
 
 @logger.catch
 def sanitize(itm):
