@@ -5,6 +5,7 @@
 river level data for both Markland and McAlpine dams. By using the mileage marker for Bushman's Lake 
 the level of the river at that point can be calculated.
 """
+from tabulate import tabulate
 
 from loguru import logger
 logger.remove()  # stop any default logger
@@ -100,6 +101,22 @@ def current_river_conditions(monitoring_point, dct):
     root_map = root.getroot()
     logger.debug("map name: " + saferepr(root_map.attrib["name"]))
     map_dict = dct
+
+    try:
+        table_output = tabulate(root_map.iter('alt'))
+        # tabulate raises TypeError when data can't be formatted
+    except TypeError:
+        e = sys.exc_info()[0]
+        logger.error(f"Could not prettify data with 'Tabulate' because of {e}")
+        logger.debug(
+            "=== root_map: " + saferepr(child_list)
+        )
+    else: 
+        logger.debug(
+            "=== root_map: " + table_output
+        )
+        
+   
     for child in root_map:
         logger.debug("root_map_child tag: " + saferepr(child.tag))
         try:
@@ -109,9 +126,21 @@ def current_river_conditions(monitoring_point, dct):
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
-            logger.debug(
-                "=== root_map_child 'alt attrib' list: " + saferepr(child_list)
-            )
+
+            try:
+                table_output = tabulate(child_list)
+                # tabulate raises TypeError when data can't be formatted
+            except TypeError:
+                e = sys.exc_info()[0]
+                logger.error(f"Could not prettify data with 'Tabulate' because of {e}")
+                logger.debug(
+                    "=== root_map_child 'alt attrib' list: " + saferepr(child_list)
+                )
+            else: 
+                logger.debug(
+                    "=== root_map_child 'alt attrib' list: " + table_output
+                )
+
             logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
