@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """ This file contains basic webscraping elements found in 
 https://realpython.com/python-web-scraping-practical-introduction/
 """
+
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
