@@ -126,7 +126,7 @@ def current_river_conditions(monitoring_point, dct):
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
-
+            """
             try:
                 table_output = tabulate(child_list)
                 # tabulate raises TypeError when data can't be formatted
@@ -140,7 +140,7 @@ def current_river_conditions(monitoring_point, dct):
                 logger.debug(
                     "=== root_map_child 'alt attrib' list: " + table_output
                 )
-
+            """
             logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
