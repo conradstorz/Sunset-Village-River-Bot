@@ -8,6 +8,7 @@ the level of the river at that point can be calculated.
 from tabulate import tabulate
 
 from loguru import logger
+
 logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
@@ -74,12 +75,10 @@ def ISO_datestring(dt, cl):
     Also trim date to report only date, hours and minutes.
     """
     isodatestr = dt.isoformat()
-    if (
-        cl[4] == "12:00AM"
-    ):  # reset time to 00:00 since it incorrectly gets set to 12:00
+    if cl[4] == "12:00AM":  # reset time to 00:00 since it incorrectly gets set to 12:00
         isodatestr = isodatestr[0:11] + "00:00"
     else:
-        isodatestr = isodatestr[0:16] # just slice off seconds and timezone
+        isodatestr = isodatestr[0:16]  # just slice off seconds and timezone
     return isodatestr
 
 
@@ -115,14 +114,14 @@ def current_river_conditions(monitoring_point, dct):
         logger.debug(
             "=== root_map: " + table_output
         )
-    """        
-   
+    """
+
     for child in root_map:
         logger.debug("root_map_child tag: " + saferepr(child.tag))
         try:
             child_list = child.attrib["alt"].split()
             child_list.append(RIVER_MONITORING_POINTS[monitoring_point]["milemarker"])
-            child_list.append(monitoring_point) 
+            child_list.append(monitoring_point)
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
@@ -214,4 +213,3 @@ def MAIN():
 
 if __name__ == "__main__":
     MAIN()
-
