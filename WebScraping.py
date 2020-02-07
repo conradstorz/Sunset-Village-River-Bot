@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 
 from loguru import logger
 
+
 @logger.catch
 def simple_get(url):
     """
@@ -58,6 +59,6 @@ def log_error(e):
 def retrieve_cleaned_html(url):
     raw_resp = simple_get(url)
     if raw_resp is not None:
-        #print(BeautifulSoup(raw_resp, "xml").prettify())
+        # print(BeautifulSoup(raw_resp, "xml").prettify())
         return BeautifulSoup(raw_resp, "html.parser")
     return None
