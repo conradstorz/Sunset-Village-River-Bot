@@ -75,12 +75,12 @@ def send_tweet(db, tm, tweet, twttr):
     """
     # place tweet time into longterm storage
     db.set(PupDB_MRTkey, str(tm))
-    #TODO place tweet into longterm storage. Keep ALL tweets keyed on timestamp
+    # TODO place tweet into longterm storage. Keep ALL tweets keyed on timestamp
     try:
         twttr.update_status(status=tweet)
     except TwythonError as e:
         logger.error(str(e))
-        logger.info('Tweet not sent.')
+        logger.info("Tweet not sent.")
     else:
         logger.info("Tweet sent.")
     finally:
@@ -132,10 +132,10 @@ def extract_forecast(obsv_data):
     observations = {}
     for line in obsv_data.keys():
         damname = obsv_data[line][-3]
-        if obsv_data[line][1] == 'Forecast:':
+        if obsv_data[line][1] == "Forecast:":
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
-                logger.debug('Forecast line:')
+                logger.debug("Forecast line:")
                 logger.debug(observations[damname])
     return observations
 
@@ -149,14 +149,14 @@ def extract_latest(obsv_data):
     """
     # scan dictionary for specified observations
     observations = {}
-    logger.debug('Scanning for latest observations:')
+    logger.debug("Scanning for latest observations:")
     for line in obsv_data.keys():
         logger.debug(obsv_data[line])
         damname = obsv_data[line][-3]
-        if obsv_data[line][0] == 'Latest':
+        if obsv_data[line][0] == "Latest":
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
-                logger.debug('Latest line:')
+                logger.debug("Latest line:")
                 logger.debug(observations[damname])
     return observations
 
@@ -164,19 +164,19 @@ def extract_latest(obsv_data):
 @logger.catch
 def assemble_text(dict_data):
     for key in dict_data.keys():
-        logger.debug('assemble tweet input line:')
+        logger.debug("assemble tweet input line:")
         logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
         dt = dict_data[key][-1]
         level_obsrvd = float(dict_data[key][2])
         milemrkr = float(dict_data[key][-4])
         elevate = float(dict_data[key][-2])
         if dict_data[key][-3] == UPRIVERDAM:
-            upriver_name = f'{key}{dt}'
+            upriver_name = f"{key}{dt}"
             upriver_level = level_obsrvd
             upriver_milemrkr = milemrkr
             upriver_elevation = elevate
         if dict_data[key][-3] == DNRIVERDAM:
-            dnriver_name = f'{key}{dt}'
+            dnriver_name = f"{key}{dt}"
             dnriver_level = level_obsrvd
             dnriver_milemrkr = milemrkr
             dnriver_elevation = elevate
@@ -224,9 +224,9 @@ def build_tweet(rivr_conditions_dict):
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
         obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
-    #extract 1 latest observation for each dam
+    # extract 1 latest observation for each dam
     latest_dict = extract_latest(obsv_dict)
-    #extract 1 forecast level for each dam
+    # extract 1 forecast level for each dam
     forecast_dict = extract_forecast(obsv_dict)
     tweet = assemble_text(latest_dict)
     return tweet
