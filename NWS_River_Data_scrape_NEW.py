@@ -101,7 +101,7 @@ def current_river_conditions(monitoring_point, dct):
     root_map = root.getroot()
     logger.debug("map name: " + saferepr(root_map.attrib["name"]))
     map_dict = dct
-
+    """ #TODO move this to it's own function or delete
     try:
         table_output = tabulate(root_map.iter('alt'))
         # tabulate raises TypeError when data can't be formatted
@@ -115,7 +115,7 @@ def current_river_conditions(monitoring_point, dct):
         logger.debug(
             "=== root_map: " + table_output
         )
-        
+    """        
    
     for child in root_map:
         logger.debug("root_map_child tag: " + saferepr(child.tag))
