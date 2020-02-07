@@ -75,10 +75,17 @@ def send_tweet(db, tm, tweet, twttr):
     """
     # place tweet time into longterm storage
     db.set(PupDB_MRTkey, str(tm))
-    twttr.update_status(status=tweet)
-    logger.info("Tweet sent.")
-    logger.debug("Tweet string = " + str(tweet))
-    logger.info("Length of string = " + str(len(tweet)))
+    #TODO place tweet into longterm storage. Keep ALL tweets keyed on timestamp
+    try:
+        twttr.update_status(status=tweet)
+    except TwythonError as e:
+        logger.error(str(e))
+        logger.info('Tweet not sent.')
+    else:
+        logger.info("Tweet sent.")
+    finally:
+        logger.debug("Tweet string = " + str(tweet))
+        logger.info("Length of string = " + str(len(tweet)))
     return True
 
 
