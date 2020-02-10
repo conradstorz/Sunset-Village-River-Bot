@@ -75,7 +75,9 @@ def send_tweet(db, tm, tweet, twttr):
     """
     # place tweet time into longterm storage
     db.set(PupDB_MRTkey, str(tm))
-    # TODO place tweet into longterm storage. Keep ALL tweets keyed on timestamp
+    # place tweet into longterm storage. Keep ALL tweets keyed on timestamp
+    tweetKey = f'Tweet@{tm}'
+    db.set(tweetKey, tweet)
     try:
         twttr.update_status(status=tweet)
     except TwythonError as e:
