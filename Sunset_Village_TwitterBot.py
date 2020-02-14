@@ -48,7 +48,7 @@ from TwitterCredentials import OAUTH_TOKEN_SECRET
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 
 # Time between tweets decreases as flooding increases
-MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[0]
+MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[1]
 
 from os import sys, path
 
