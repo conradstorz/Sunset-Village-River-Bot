@@ -33,7 +33,8 @@ ACTION_LABELS = [
     "Moderate-flood",
     "Major-flood",
 ]
-TWEET_FREQUENCY = [18000, 9000, 4000, 2000, 1000]  # delay time in seconds
+MINIMUM_CONCERN_LEVEL = 30
+TWEET_FREQUENCY = [18000, 9000, 8000, 7000, 6000, 5000, 4000, 3600, 3600, 3600, 3600]  # delay time in seconds
 # ACTION_LEVELS = [21, 23, 30, 38]
 # ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
@@ -61,12 +62,12 @@ LOGGING_LEVEL = "INFO"
 
 
 @logger.catch
-def test_tweet():
+def test_tweet(db):
     data = get_level_data()
     # data contains ALL "imortant" levels
     # logger.debug(str(data))
     # TODO create function to extract only 6 most relevent current,highest,eventual levels
-    return build_tweet(data)
+    return build_tweet(data, db)
 
 
 @logger.catch
@@ -164,7 +165,7 @@ def extract_latest(obsv_data):
 
 
 @logger.catch
-def assemble_text(dict_data):
+def assemble_text(dict_data, db):
     for key in dict_data.keys():
         logger.debug("assemble tweet input line:")
         logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
@@ -202,11 +203,13 @@ def assemble_text(dict_data):
     tweet = t1 + t2 + t3 + " ::: Data source: http://portky.com/river.php"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
+    # place this river level projection into longterm storage database
+    db.set(PupDB_MRLkey, projection)
     return tweet
 
 
 @logger.catch
-def build_tweet(rivr_conditions_dict):
+def build_tweet(rivr_conditions_dict, db):
     """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
     """
     tweet = " "
@@ -228,9 +231,9 @@ def build_tweet(rivr_conditions_dict):
         obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
     # extract 1 latest observation for each dam
     latest_dict = extract_latest(obsv_dict)
-    # extract 1 forecast level for each dam
-    forecast_dict = extract_forecast(obsv_dict)
-    tweet = assemble_text(latest_dict)
+    # TODO extract 1 forecast level for each dam
+    # forecast_dict = extract_forecast(obsv_dict)
+    tweet = assemble_text(latest_dict, db)
     return tweet
 
 
@@ -241,8 +244,13 @@ def UpdatePrediction(twtr, tm, db):
     tm = datetime obj representing current time
     db = PupDB obj for persistant storage on local machine
     """
-    MOST_RECENT_TWEET = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
-    prevTweet = parser.parse(MOST_RECENT_TWEET)  # convert back to datetime
+    MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
+    prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
+    MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
+    priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
+    if priority < 0: 
+        priority = 0
+    MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
     # check tm against minimum tweet time
     logger.info("Time now: " + str(tm))
     logger.info("Previous Tweet time: " + str(prevTweet))
@@ -253,7 +261,7 @@ def UpdatePrediction(twtr, tm, db):
         logger.info("Tweeting...")
         waitTime = 0
         data = get_level_data()
-        sp = build_tweet(data)
+        sp = build_tweet(data, db)
         send_tweet(db, tm, sp, twtr)
     else:
         logger.info("Too soon to tweet.")
