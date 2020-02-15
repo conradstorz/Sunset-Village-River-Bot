@@ -247,6 +247,8 @@ def UpdatePrediction(twtr, tm, db):
     MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
     MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
+    # TODO figure out how to initialize database with a default reading
+    # TODO for now i'm inserting it manually
     priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
     if priority < 0: 
         priority = 0
