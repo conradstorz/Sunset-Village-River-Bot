@@ -252,7 +252,9 @@ def UpdatePrediction(twtr, tm, db):
     priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
     if priority < 0: 
         priority = 0
+    logger.info("Priority: " + str(priority))
     MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
+    logger.info("Time between Tweets: " + str(MINIMUM_TIME_BETWEEN_TWEETS))
     # check tm against minimum tweet time
     logger.info("Time now: " + str(tm))
     logger.info("Previous Tweet time: " + str(prevTweet))
