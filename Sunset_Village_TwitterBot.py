@@ -34,7 +34,9 @@ ACTION_LABELS = [
     "Major-flood",
 ]
 MINIMUM_CONCERN_LEVEL = 30
-TWEET_FREQUENCY = [18000, 9000, 8000, 7000, 6000, 5000, 4000, 3600, 3600, 3600, 3600]  # delay time in seconds
+TWEET_FREQUENCY = [18000, 9000, 8000, 7000, 6000, 5000, 4000, 3600]  # delay time in seconds
+# Time between tweets decreases as flooding increases
+# MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[0]
 # ACTION_LEVELS = [21, 23, 30, 38]
 # ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
@@ -48,8 +50,6 @@ from TwitterCredentials import OAUTH_TOKEN_SECRET
 
 TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 
-# Time between tweets decreases as flooding increases
-MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[1]
 
 from os import sys, path
 
@@ -252,6 +252,8 @@ def UpdatePrediction(twtr, tm, db):
     priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
     if priority < 0: 
         priority = 0
+    if priority > len(TWEET_FREQUENCY):
+        priority = len(TWEET_FREQUENCY) - 1
     logger.info("Priority: " + str(priority))
     MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
     logger.info("Time between Tweets: " + str(MINIMUM_TIME_BETWEEN_TWEETS))
