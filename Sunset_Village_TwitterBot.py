@@ -289,6 +289,7 @@ def Main(credentials):
     MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
     if MOST_RECENT_TWEET == None:  # Pre-load empty database
         storage_db.set(PupDB_MRTkey, str(TimeNow))
+        storage_db.set(PupDB_MRLkey, MINIMUM_CONCERN_LEVEL)      
     while True:
         TimeNow = datetime.now()
         wait = UpdatePrediction(twitter, TimeNow, storage_db)
