@@ -18,8 +18,16 @@ from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
 from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
 from pprint import saferepr
 from pprint import pprint
-
 from pupdb.core import PupDB
+# detect various add-on Rpi hats
+try:
+    SenseHatLoaded = True
+    from sense_hat import SenseHat
+    sense = SenseHat()
+except ImportError as e:
+    print('Failed to detect "SenseHat" module.')
+    SenseHatLoaded = False
+print(f'Sense Hat loaded: {SenseHatLoaded}')
 
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
@@ -273,7 +281,13 @@ def UpdatePrediction(twtr, tm, db):
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
         logger.info("Recommend waiting " + str(waitTime) + " seconds.")
-    return waitTime
+    return (waitTime, MOST_RECENT_LEVEL)
+
+
+@logger.catch
+def DisplayLevel(level):
+    if SenseHatLoaded:
+        sense.show_message(f'Latest level {level:.2f}ft')
 
 
 @logger.catch
@@ -287,12 +301,16 @@ def Main(credentials):
     TimeNow = datetime.now()
     storage_db = PupDB(PupDB_FILENAME)
     MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
+    MOST_RECENT_LEVEL = storage_db.get(PupDB_MRLkey)
     if MOST_RECENT_TWEET == None:  # Pre-load empty database
-        storage_db.set(PupDB_MRTkey, str(TimeNow))
-        storage_db.set(PupDB_MRLkey, MINIMUM_CONCERN_LEVEL)      
+        MOST_RECENT_TWEET = str(TimeNow)
+        MOST_RECENT_LEVEL = MINIMUM_CONCERN_LEVEL
+        storage_db.set(PupDB_MRTkey, MOST_RECENT_TWEET)
+        storage_db.set(PupDB_MRLkey, MOST_RECENT_LEVEL)      
     while True:
         TimeNow = datetime.now()
-        wait = UpdatePrediction(twitter, TimeNow, storage_db)
+        wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
+        DisplayLevel(MOST_RECENT_LEVEL)
         time.sleep(wait / 5)  # delay until next check
     return
 
