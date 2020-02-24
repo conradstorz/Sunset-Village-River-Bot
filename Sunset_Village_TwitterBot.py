@@ -311,7 +311,7 @@ def Main(credentials):
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
         while wait >= 0:
-            wait = wait - 1
+            wait = wait - 10
             DisplayLevel(MOST_RECENT_LEVEL)
             print('.', end='', flush=True)
             modulus = wait % 50
