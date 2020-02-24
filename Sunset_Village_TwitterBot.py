@@ -253,8 +253,6 @@ def UpdatePrediction(twtr, tm, db):
     MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
     MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
-    # TODO figure out how to initialize database with a default reading
-    # TODO for now i'm inserting it manually
     priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
     if priority < 0: 
         priority = 0
@@ -271,7 +269,7 @@ def UpdatePrediction(twtr, tm, db):
     logger.info("Total number of seconds elapsed: " + str(elapsed.total_seconds()))
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         logger.info("Tweeting...")
-        waitTime = 0
+        waitTime = MINIMUM_TIME_BETWEEN_TWEETS
         data = get_level_data()
         sp = build_tweet(data, db)
         send_tweet(db, tm, sp, twtr)
@@ -286,6 +284,7 @@ def UpdatePrediction(twtr, tm, db):
 def DisplayLevel(level):
     global sense
     if SenseHatLoaded:
+        # TODO add aditonal data like temp and humidity of server hat
         sense.show_message(f'{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft')
 
 
@@ -310,7 +309,7 @@ def Main(credentials):
     while True:
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
-        while wait >= 0:
+        while wait > 0:
             wait = wait - 10
             DisplayLevel(MOST_RECENT_LEVEL)
             print('.', end='', flush=True)

@@ -87,34 +87,24 @@ def current_river_conditions(monitoring_point, dct):
     """ scrape NOAA website for current river conditions.
     Write results to PupDB file and include current flooding action level
     """
+    # TODO this routine is too fragile and needs better error handling
+    this_river = RIVER_MONITORING_POINTS[monitoring_point]
     logger.info(
         "Scraping webite..."
-        + saferepr(RIVER_MONITORING_POINTS[monitoring_point]["Friendly_Name"])
+        + saferepr(this_river["Friendly_Name"])
     )
-    html = retrieve_cleaned_html(RIVER_MONITORING_POINTS[monitoring_point]["Dam_URL"])
-    logger.info('...scanning list of "map" objects...')
-    map_raw = html.select("map")[0]  # grab first item named 'map'
+    html = retrieve_cleaned_html(this_river["Dam_URL"])
+    if html != None:
+        logger.info('...scanning list of "map" objects...')
+        map_raw = html.select("map")[0]  # grab first item named 'map'
+    else:
+        logger.error(f'No "HTML" returned in web scrape of {this_river["Friendly_Name"]}')
     parser_engine = ET.XMLParser(recover=True)
     tree = ET.fromstring(str(map_raw), parser=parser_engine)
     root = tree.getroottree()
     root_map = root.getroot()
     logger.debug("map name: " + saferepr(root_map.attrib["name"]))
     map_dict = dct
-    """ #TODO move this to it's own function or delete
-    try:
-        table_output = tabulate(root_map.iter('alt'))
-        # tabulate raises TypeError when data can't be formatted
-    except TypeError:
-        e = sys.exc_info()[0]
-        logger.error(f"Could not prettify data with 'Tabulate' because of {e}")
-        logger.debug(
-            "=== root_map: " + saferepr(child_list)
-        )
-    else: 
-        logger.debug(
-            "=== root_map: " + table_output
-        )
-    """
 
     for child in root_map:
         logger.debug("root_map_child tag: " + saferepr(child.tag))
@@ -125,21 +115,7 @@ def current_river_conditions(monitoring_point, dct):
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
-            """
-            try:
-                table_output = tabulate(child_list)
-                # tabulate raises TypeError when data can't be formatted
-            except TypeError:
-                e = sys.exc_info()[0]
-                logger.error(f"Could not prettify data with 'Tabulate' because of {e}")
-                logger.debug(
-                    "=== root_map_child 'alt attrib' list: " + saferepr(child_list)
-                )
-            else: 
-                logger.debug(
-                    "=== root_map_child 'alt attrib' list: " + table_output
-                )
-            """
+
             logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
