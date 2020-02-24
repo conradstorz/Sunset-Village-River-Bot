@@ -25,9 +25,7 @@ try:
     from sense_hat import SenseHat
     sense = SenseHat()
 except ImportError as e:
-    print('Failed to detect "SenseHat" module.')
     SenseHatLoaded = False
-print(f'Sense Hat loaded: {SenseHatLoaded}')
 
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
@@ -293,6 +291,7 @@ def DisplayLevel(level):
 @logger.catch
 def Main(credentials):
     defineLoggers()
+    logger.info(f'Sense Hat loaded: {SenseHatLoaded}')
     # unpack the credentials before submitting to Twython
     a, b, c, d = credentials
     # establish the twitter access object
