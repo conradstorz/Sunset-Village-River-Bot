@@ -284,6 +284,7 @@ def UpdatePrediction(twtr, tm, db):
 
 @logger.catch
 def DisplayLevel(level):
+    global sense
     if SenseHatLoaded:
         sense.show_message(f'Latest level {level:.2f}ft')
 
@@ -309,8 +310,15 @@ def Main(credentials):
     while True:
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
-        DisplayLevel(MOST_RECENT_LEVEL)
-        time.sleep(wait / 5)  # delay until next check
+        while wait >= 0:
+            wait = wait - 1
+            DisplayLevel(MOST_RECENT_LEVEL)
+            print('.', end='', flush=True)
+            modulus = wait % 50
+            if modulus == 0:
+                print('')
+                print (f'Wait time = {wait}')
+            time.sleep(10)  # delay until next check
     return
 
 
