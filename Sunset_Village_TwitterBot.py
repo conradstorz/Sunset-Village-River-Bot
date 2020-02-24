@@ -286,7 +286,7 @@ def UpdatePrediction(twtr, tm, db):
 def DisplayLevel(level):
     global sense
     if SenseHatLoaded:
-        sense.show_message(f'Latest level {level:.2f}ft')
+        sense.show_message(f'{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft')
 
 
 @logger.catch
@@ -317,7 +317,7 @@ def Main(credentials):
             modulus = wait % 50
             if modulus == 0:
                 print('')
-                print (f'Wait time = {wait}')
+                print (f'Wait time remaining: {wait}')
             time.sleep(10)  # delay until next check
     return
 
