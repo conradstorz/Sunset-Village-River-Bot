@@ -335,6 +335,12 @@ def defineLoggers():
         compression="zip",
         level="DEBUG",  # always send debug output to file
     )
+    logger.add(  # create a log file for each run of the program
+        "./LOGS/" + RUNTIME_NAME + ".log",
+        retention="10 days",
+        compression="zip",
+        level="DEBUG",  # always send debug output to file
+    )    
     return
 
 
