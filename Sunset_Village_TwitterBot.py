@@ -124,9 +124,13 @@ def extract_data(map_data, lbl_str):
     # scan dictionary for specified observations
     observations = {}
     for line in map_data.keys():
+        logger.debug(f'Map Data Key: {line}')
         if map_data[line][0] == lbl_str:
             key = f"{map_data[line][-3]}{map_data[line][-1]}"
-            observations[key] = sanitize(map_data[line])
+            logger.debug(f'Observation Tag: {key}')
+            obsrv = sanitize(map_data[line])
+            observations[key] = obsrv
+            logger.debug(f'Observation: {obsrv}')
     return observations
 
 
@@ -140,12 +144,15 @@ def extract_forecast(obsv_data):
     # scan dictionary for specified observations
     observations = {}
     for line in obsv_data.keys():
+        logger.debug(f'Observation Key: {line}')
         damname = obsv_data[line][-3]
         if obsv_data[line][1] == "Forecast:":
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
                 logger.debug("Forecast line:")
                 logger.debug(observations[damname])
+            else:
+                logger.error(f'Multiple forecast lines found.')
     return observations
 
 
@@ -175,17 +182,17 @@ def assemble_text(dict_data, db):
     for key in dict_data.keys():
         logger.debug("assemble tweet input line:")
         logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
-        dt = dict_data[key][-1]
+        date = dict_data[key][-1]
         level_obsrvd = float(dict_data[key][2])
         milemrkr = float(dict_data[key][-4])
         elevate = float(dict_data[key][-2])
         if dict_data[key][-3] == UPRIVERDAM:
-            upriver_name = f"{key}{dt}"
+            upriver_name = f"{key}{date}"
             upriver_level = level_obsrvd
             upriver_milemrkr = milemrkr
             upriver_elevation = elevate
         if dict_data[key][-3] == DNRIVERDAM:
-            dnriver_name = f"{key}{dt}"
+            dnriver_name = f"{key}{date}"
             dnriver_level = level_obsrvd
             dnriver_milemrkr = milemrkr
             dnriver_elevation = elevate
