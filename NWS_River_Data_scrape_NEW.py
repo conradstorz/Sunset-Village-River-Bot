@@ -183,7 +183,7 @@ def defineLoggers():
 @logger.catch
 def MAIN():
     defineLoggers()
-    processRiverData()
+    print(processRiverData())
     return True
 
 
