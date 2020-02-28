@@ -11,18 +11,21 @@ from datetime import datetime, timezone
 from datetime import timedelta
 from dateutil import parser
 
-from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
+# from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
 from NWS_River_Data_scrape_NEW import RIVER_MONITORING_POINTS
 from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
 from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
-from pprint import saferepr
-from pprint import pprint
+
+# from pprint import saferepr
+# from pprint import pprint
 from pupdb.core import PupDB
+
 # detect various add-on Rpi hats
 try:
     SenseHatLoaded = True
     from sense_hat import SenseHat
+
     sense = SenseHat()
 except ImportError as e:
     SenseHatLoaded = False
@@ -40,9 +43,18 @@ ACTION_LABELS = [
     "Major-flood",
 ]
 MINIMUM_CONCERN_LEVEL = 30
-TWEET_FREQUENCY = [18000, 9000, 8000, 7000, 6000, 5000, 4000, 3600]  # delay time in seconds
+TWEET_FREQUENCY = [
+    18000,
+    9000,
+    8000,
+    7000,
+    6000,
+    5000,
+    4000,
+    3600,
+]  # delay time in seconds
 # Time between tweets decreases as flooding increases
-# MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[0]
+
 # ACTION_LEVELS = [21, 23, 30, 38]
 # ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
@@ -77,13 +89,13 @@ def test_tweet(db):
 
 
 @logger.catch
-def send_tweet(db, tm, tweet, twttr):
+def send_tweet(db, time, tweet, twttr):
     """Accept a datetime object, a tweet string and a Twython object. Place tweet and updtae filesystem storage to reflect activities.
     """
     # place tweet time into longterm storage
-    db.set(PupDB_MRTkey, str(tm))
+    db.set(PupDB_MRTkey, str(time))
     # place tweet into longterm storage. Keep ALL tweets keyed on timestamp
-    tweetKey = f'Tweet@{tm}'
+    tweetKey = f"Tweet@{time}"
     db.set(tweetKey, tweet)
     try:
         twttr.update_status(status=tweet)
@@ -106,12 +118,12 @@ def sanitize(itm):
     """
     sani = itm
     if itm[0] == "Latest":
-        logger.debug(itm)
+        logger.debug(f"Raw Item from NOAA: {itm}")
         tail = itm[3:]
         sani = [itm[0], "Observation:"]
         for i in tail:
             sani.append(i)
-        logger.debug(sani)
+        logger.debug(f"Sanitized item from NOAA: {sani}")
     return sani
 
 
@@ -124,13 +136,13 @@ def extract_data(map_data, lbl_str):
     # scan dictionary for specified observations
     observations = {}
     for line in map_data.keys():
-        logger.debug(f'Map Data Key: {line}')
+        logger.debug(f"Map Data Key: {line}")
         if map_data[line][0] == lbl_str:
             key = f"{map_data[line][-3]}{map_data[line][-1]}"
-            logger.debug(f'Observation Tag: {key}')
+            logger.debug(f"Observation Tag: {key}")
             obsrv = sanitize(map_data[line])
             observations[key] = obsrv
-            logger.debug(f'Observation: {obsrv}')
+            logger.debug(f"Observation: {obsrv}")
     return observations
 
 
@@ -143,16 +155,17 @@ def extract_forecast(obsv_data):
     """
     # scan dictionary for specified observations
     observations = {}
+    logger.debug("Scanning for Forecast observations:")
     for line in obsv_data.keys():
-        logger.debug(f'Observation Key: {line}')
+        logger.debug(f"Observation Key: {line}")
         damname = obsv_data[line][-3]
         if obsv_data[line][1] == "Forecast:":
+            logger.debug("Forecast line:")
+            logger.debug(observations[damname])
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
-                logger.debug("Forecast line:")
-                logger.debug(observations[damname])
             else:
-                logger.error(f'Multiple forecast lines found.')
+                logger.error(f"Multiple forecast lines found.")
     return observations
 
 
@@ -251,7 +264,18 @@ def build_tweet(rivr_conditions_dict, db):
 
 
 @logger.catch
-def UpdatePrediction(twtr, tm, db):
+def QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL):
+    flooding = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
+    if flooding < 0:
+        flooding = 0
+    # value cannot exceede number of available levels
+    if flooding > len(TWEET_FREQUENCY):
+        flooding = len(TWEET_FREQUENCY) - 1
+    return flooding
+
+
+@logger.catch
+def UpdatePrediction(twtr, time, db):
     """ Returns the time to wait until next tweet and Tweets if enough time has passed
     twtr = twython object for accessing Twitter
     tm = datetime obj representing current time
@@ -260,30 +284,26 @@ def UpdatePrediction(twtr, tm, db):
     MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
     MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
-    priority = int(MOST_RECENT_LEVEL - MINIMUM_CONCERN_LEVEL)
-    if priority < 0: 
-        priority = 0
-    if priority > len(TWEET_FREQUENCY):
-        priority = len(TWEET_FREQUENCY) - 1
-    logger.info("Priority: " + str(priority))
+    priority = QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL)
+    logger.info(f"Priority: {priority}")
     MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
-    logger.info("Time between Tweets: " + str(MINIMUM_TIME_BETWEEN_TWEETS))
-    # check tm against minimum tweet time
-    logger.info("Time now: " + str(tm))
-    logger.info("Previous Tweet time: " + str(prevTweet))
-    elapsed = tm - prevTweet  # returns a timedelta object
-    logger.info("Time since last Tweet: " + str(elapsed))
-    logger.info("Total number of seconds elapsed: " + str(elapsed.total_seconds()))
+    logger.info(f"Time between Tweets: {MINIMUM_TIME_BETWEEN_TWEETS}")
+    # check time against minimum tweet time
+    logger.info(f"Time now: {time}")
+    logger.info(f"Previous Tweet time: {prevTweet}")
+    elapsed = time - prevTweet  # returns a timedelta object
+    logger.info(f"Time since last Tweet: {elapsed}")
+    logger.info(f"Total number of seconds elapsed: {elapsed.total_seconds()}")
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         logger.info("Tweeting...")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS
         data = get_level_data()
-        sp = build_tweet(data, db)
-        send_tweet(db, tm, sp, twtr)
+        status = build_tweet(data, db)
+        send_tweet(db, time, status, twtr)
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
-        logger.info("Recommend waiting " + str(waitTime) + " seconds.")
+        logger.info(f"Recommend waiting {waitTime} seconds.")
     return (waitTime, MOST_RECENT_LEVEL)
 
 
@@ -292,13 +312,14 @@ def DisplayLevel(level):
     global sense
     if SenseHatLoaded:
         # TODO add aditonal data like temp and humidity of server hat
-        sense.show_message(f'{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft')
+        sense.show_message(f"{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
+    return
 
 
 @logger.catch
 def Main(credentials):
     defineLoggers()
-    logger.info(f'Sense Hat loaded: {SenseHatLoaded}')
+    logger.info(f"Sense Hat loaded: {SenseHatLoaded}")
     # unpack the credentials before submitting to Twython
     a, b, c, d = credentials
     # establish the twitter access object
@@ -312,19 +333,19 @@ def Main(credentials):
         MOST_RECENT_TWEET = str(TimeNow)
         MOST_RECENT_LEVEL = MINIMUM_CONCERN_LEVEL
         storage_db.set(PupDB_MRTkey, MOST_RECENT_TWEET)
-        storage_db.set(PupDB_MRLkey, MOST_RECENT_LEVEL)      
+        storage_db.set(PupDB_MRLkey, MOST_RECENT_LEVEL)
     while True:
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
         while wait > 0:
-            wait = wait - 10
-            DisplayLevel(MOST_RECENT_LEVEL)
-            print('.', end='', flush=True)
-            modulus = wait % 50
-            if modulus == 0:
-                print('')
-                print (f'Wait time remaining: {wait}')
-            time.sleep(10)  # delay until next check
+            wait = wait - 1
+            if (wait % 10) == 0:
+                DisplayLevel(MOST_RECENT_LEVEL)
+                print(".", end="", flush=True)
+            if (wait % 50) == 0:
+                print("")
+                print(f"Wait time remaining: {wait}")
+            time.sleep(1)  # delay until next check
     return
 
 
@@ -347,7 +368,7 @@ def defineLoggers():
         retention="10 days",
         compression="zip",
         level="DEBUG",  # always send debug output to file
-    )    
+    )
     return
 
 
