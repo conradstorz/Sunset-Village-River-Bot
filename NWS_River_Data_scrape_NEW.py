@@ -136,12 +136,18 @@ def current_river_conditions(monitoring_point, dct):
                     map_dict[observation_key] = child_list
             else:
                 logger.debug("no date found")
+                logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
+                logger.debug("datestamp search result:" + str(date_iso))
                 logger.debug(saferepr(child.attrib))
         except ValueError as e:
             logger.debug("no date")
+            logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
+            logger.debug("datestamp search result:" + str(date_iso))
             logger.debug(saferepr(e))
         except KeyError:
             logger.debug("no title")
+            logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
+            logger.debug("datestamp search result:" + str(date_iso))
             logger.debug(saferepr(child.attrib))
     logger.debug(f"Current_River_Conditions function results: {saferepr(map_dict)}")
     return map_dict
