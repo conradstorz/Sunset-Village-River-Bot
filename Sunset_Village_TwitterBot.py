@@ -380,15 +380,16 @@ def Main(credentials):
         MOST_RECENT_LEVEL = MINIMUM_CONCERN_LEVEL
         storage_db.set(PupDB_MRTkey, MOST_RECENT_TWEET)
         storage_db.set(PupDB_MRLkey, MOST_RECENT_LEVEL)
+    # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
         while wait > 0:
             wait = wait - 1
-            if (wait % 10) == 0:
+            if (wait % 10) == 0: # update external displays connected to server each ten seconds.
                 DisplayLevel(MOST_RECENT_LEVEL)
                 print(".", end="", flush=True)
-            if (wait % 50) == 0:
+            if (wait % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
                 print(f"Wait time remaining: {wait}")
             time.sleep(1)  # delay until next check
