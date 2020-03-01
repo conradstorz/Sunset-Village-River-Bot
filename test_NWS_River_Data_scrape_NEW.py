@@ -8,6 +8,7 @@ the level of the river at that point can be calculated.
 
 from NWS_River_Data_scrape_NEW import processRiverData
 
+
 def test_processRiverData():
     pd = processRiverData()
     assert type(pd) == dict
@@ -18,15 +19,19 @@ def test_processRiverData():
 from hypothesis import given
 import hypothesis.strategies as hst
 
+
 def decode(s):
     return s
+
 
 def encode(s):
     return s
 
+
 @given(hst.text())
 def test_decode_inverts_encode(s):
     assert decode(encode(s)) == s
+
 
 @given(hst.lists(hst.text()))
 def test_ISO_datestring(l):

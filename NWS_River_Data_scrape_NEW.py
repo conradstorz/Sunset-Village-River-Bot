@@ -67,6 +67,7 @@ RIVER_MONITORING_POINTS = {
 DAMS = list(RIVER_MONITORING_POINTS.keys())
 IMPORTANT_OBSERVATIONS = ["Forecast:", "Latest", "Highest"]
 
+
 @logger.catch
 def ISO_datestring(dt, cl):
     """ Convert a DateTime object to an ISO datestring.
@@ -89,17 +90,16 @@ def current_river_conditions(monitoring_point, dct):
     """
     # TODO this routine is too fragile and needs better error handling
     this_river = RIVER_MONITORING_POINTS[monitoring_point]
-    logger.info(
-        "Scraping webite..."
-        + saferepr(this_river["Friendly_Name"])
-    )
+    logger.info("Scraping webite..." + saferepr(this_river["Friendly_Name"]))
     html = retrieve_cleaned_html(this_river["Dam_URL"])
     if html != None:
         logger.info('...scanning list of "map" objects...')
         map_raw = html.select("map")[0]  # grab first item named 'map'
     else:
-        logger.error(f'No "HTML" returned in web scrape of {this_river["Friendly_Name"]}')
-        return {} # error condition
+        logger.error(
+            f'No "HTML" returned in web scrape of {this_river["Friendly_Name"]}'
+        )
+        return {}  # error condition
     parser_engine = ET.XMLParser(recover=True)
     tree = ET.fromstring(str(map_raw), parser=parser_engine)
     root = tree.getroottree()
@@ -140,7 +140,7 @@ def current_river_conditions(monitoring_point, dct):
         except KeyError:
             logger.debug("no title")
             logger.debug(saferepr(child.attrib))
-    logger.debug(f'Current_River_Conditions function results: {saferepr(map_dict)}')
+    logger.debug(f"Current_River_Conditions function results: {saferepr(map_dict)}")
     return map_dict
 
 
@@ -152,17 +152,17 @@ def clean_item(lst):
         float(lst[1])
     except ValueError:
         # combine first and second items
-        tag = f'{lst[0]}  {lst[1]}'
-        if lst[2] == 'value:':
-            #drop bad label
+        tag = f"{lst[0]}  {lst[1]}"
+        if lst[2] == "value:":
+            # drop bad label
             lst = lst[3:]
         else:
             lst = lst[2:]
         lst.insert(0, tag)
-    for item in ['at', 'EST', 'Flood', 'Stage', 'is', 'ft']:
+    for item in ["at", "EST", "Flood", "Stage", "is", "ft"]:
         lst = [s for s in lst if s != item]
-    if lst[3] in ['AM', 'PM']:
-        lst[2] = f'{lst[2]}{lst[3]}'
+    if lst[3] in ["AM", "PM"]:
+        lst[2] = f"{lst[2]}{lst[3]}"
     return lst
 
 
@@ -176,15 +176,15 @@ def processRiverData():
     for name in DAMS:
         results = current_river_conditions(name, results)
     if results == {}:
-        return [] # error condition
+        return []  # error condition
     times = list(results.keys())
     times = sorted(times)
     output = {}
     for item in times:
         if results[item][0] in IMPORTANT_OBSERVATIONS:
-            logger.debug(f'Raw item: {saferepr(results[item])}')
+            logger.debug(f"Raw item: {saferepr(results[item])}")
             sani = clean_item(results[item])
-            logger.debug(f'Cleaned item: {sani}')
+            logger.debug(f"Cleaned item: {sani}")
             output[item] = sani
     return output
 
@@ -209,10 +209,10 @@ def defineLoggers():
 @logger.catch
 def MAIN():
     defineLoggers()
-    #print(tabulate(processRiverData()))
+    # print(tabulate(processRiverData()))
     map_data = processRiverData()
     if map_data == []:
-        return False # error condition
+        return False  # error condition
     lst = []
     for item in map_data:
         lst.append(map_data[item])

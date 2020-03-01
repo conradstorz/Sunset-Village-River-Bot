@@ -143,7 +143,7 @@ def extract_data(map_data, lbl_str):
     observations = {}
     for line in map_data.keys():
         logger.debug(f"Map Data Key: {line}")
-        logger.debug(f'data:{map_data[line][0]} label:{lbl_str}')
+        logger.debug(f"data:{map_data[line][0]} label:{lbl_str}")
         if map_data[line][0] == lbl_str:
             key = f"{map_data[line][-3]}{map_data[line][-1]}"
             logger.debug(f"Observation Tag: {key}")
@@ -208,8 +208,8 @@ def assemble_text(dict_data, db):
             milemrkr = float(dict_data[key][-4])
             elevate = float(dict_data[key][-2])
         except ValueError:
-            logger.error(f'Did not retrieve correct data from source.')
-            return '' # error condition
+            logger.error(f"Did not retrieve correct data from source.")
+            return ""  # error condition
         if dict_data[key][-3] == UPRIVERDAM:
             upriver_name = f"{key}{date}"
             upriver_level = level_obsrvd
@@ -267,14 +267,14 @@ def build_tweet(rivr_conditions_dict, db):
     for lbl in OBSERVATION_TAGS:
         obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
     # extract 1 latest observation for each dam
-    logger.debug(f'Observation dict: {obsv_dict}')
+    logger.debug(f"Observation dict: {obsv_dict}")
     latest_dict = extract_latest(obsv_dict)
-    logger.debug(f'Latest dict contents: {latest_dict}')
+    logger.debug(f"Latest dict contents: {latest_dict}")
     # TODO extract 1 forecast level for each dam
     forecast_dict = extract_forecast(obsv_dict)
     tweet = assemble_text(latest_dict, db)
-    if tweet == '':
-        logger.error(f'Did not generate a tweet string.')
+    if tweet == "":
+        logger.error(f"Did not generate a tweet string.")
     return tweet
 
 
@@ -317,7 +317,7 @@ def UpdatePrediction(twtr, time, db):
         if len(status) > 0:
             send_tweet(db, time, status, twtr)
         else:
-            logger.error(f'Did not tweet. No tweet generated.')
+            logger.error(f"Did not tweet. No tweet generated.")
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds

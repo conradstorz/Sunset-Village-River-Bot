@@ -11,4 +11,4 @@ from pupdb.core import PupDB
 # create a dummy data file database
 storage_db = PupDB("temp")
 defineLoggers()
-print('tweet:', test_tweet(storage_db))
+print("tweet:", test_tweet(storage_db))
