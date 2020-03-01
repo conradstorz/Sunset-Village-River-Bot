@@ -5,7 +5,7 @@
 based on the NWS website data for the river level both upstream and downstream then calculating 
 the slope of the river to get the calculated level at our property. 
 """
-
+import sys
 import time
 from datetime import datetime, timezone
 from datetime import timedelta
@@ -36,7 +36,7 @@ PupDB_MRLkey = "MostRecentRiverLevel"
 PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 HIGHEST_TAG = "Highest  Observation:"
 LATEST_TAG = "Latest  observed"
-FORECAST_TAG = "Forecast:"
+FORECAST_TAG = "Highest  Forecast:"
 OBSERVATION_TAGS = [LATEST_TAG, HIGHEST_TAG, FORECAST_TAG]
 
 ACTION_LABELS = [
@@ -85,10 +85,24 @@ LOGGING_LEVEL = "INFO"
 
 @logger.catch
 def test_tweet(db):
+    logger.info(f"Database object: {type(db)}")
     data = get_level_data()
+    logger.info(f"get_level_data returned: {data}")
     # data contains ALL "imortant" levels
     # logger.debug(str(data))
     # TODO create function to extract only 6 most relevent current,highest,eventual levels
+    obsv_dict = {}
+    for lbl in OBSERVATION_TAGS:
+        obsv_dict.update(extract_data(data, lbl))
+    # extract 1 latest observation for each dam
+    logger.info(f"Observation dict: {obsv_dict}")
+    latest_dict = extract_latest(obsv_dict)
+    logger.info(f"{extract_guage_data(latest_dict, UPRIVERDAM)}")
+    logger.info(f"{extract_guage_data(latest_dict, DNRIVERDAM)}")
+    logger.info(f"Latest dict contents: {latest_dict}")
+    # TODO extract 1 forecast level for each dam
+    forecast_dict = extract_forecast(obsv_dict)
+    logger.info(f"Forecast dict: {forecast_dict}")
     return build_tweet(data, db)
 
 
@@ -162,17 +176,17 @@ def extract_forecast(obsv_data):
     """
     # scan dictionary for specified observations
     observations = {}
-    logger.debug("Scanning for Forecast observations:")
+    logger.debug("Scanning for Highest Forecast observations:")
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
         damname = obsv_data[line][-3]
-        if obsv_data[line][1] == FORECAST_TAG:
-            logger.debug("Forecast line:")
-            logger.debug(observations[damname])
+        if obsv_data[line][0] == FORECAST_TAG:
+            logger.debug("Highest Forecast line:")
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
-            else:
-                logger.error(f"Multiple forecast lines found.")
+            if float(observations[damname][1]) < float(obsv_data[line][1]):
+                observations[damname] = obsv_data[line]
+            logger.debug(obsv_data[line])
     return observations
 
 
@@ -198,46 +212,60 @@ def extract_latest(obsv_data):
 
 
 @logger.catch
-def assemble_text(dict_data, db):
-    for key in dict_data.keys():
-        logger.debug("assemble tweet input line:")
-        logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
-        date = dict_data[key][-1]
+def extract_guage_data(dict_data, damname):
+    guage_reading = (damname, 0, 0, 0)
+    if damname in dict_data.keys():
+        logger.debug(f"Entry[{damname}]:{str(dict_data[damname])}")
+        date = dict_data[damname][-1]
         try:
-            level_obsrvd = float(dict_data[key][1])
-            milemrkr = float(dict_data[key][-4])
-            elevate = float(dict_data[key][-2])
+            level_obsrvd = float(dict_data[damname][1])
+            milemrkr = float(dict_data[damname][-4])
+            elevate = float(dict_data[damname][-2])
         except ValueError:
             logger.error(f"Did not retrieve correct data from source.")
-            return ""  # error condition
-        if dict_data[key][-3] == UPRIVERDAM:
-            upriver_name = f"{key}{date}"
-            upriver_level = level_obsrvd
-            upriver_milemrkr = milemrkr
-            upriver_elevation = elevate
-        if dict_data[key][-3] == DNRIVERDAM:
-            dnriver_name = f"{key}{date}"
-            dnriver_level = level_obsrvd
-            dnriver_milemrkr = milemrkr
-            dnriver_elevation = elevate
+        guage_reading = (damname + date, level_obsrvd, milemrkr, elevate)
+    return guage_reading
+
+
+@logger.catch
+def calculate_level(upriver, dnriver):
+    """ Calculate river level at point of interest """
+    _upriver_name, upriver_level, upriver_milemrkr, upriver_elevation = upriver
+    _dnriver_name, dnriver_level, dnriver_milemrkr, dnriver_elevation = dnriver
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
-    # correct for difference in elevation of guages
-    elev_diff = upriver_elevation - dnriver_elevation
+    elev_diff = (
+        upriver_elevation - dnriver_elevation
+    )  # correct for difference in elevation of guages
     slope = slope - elev_diff
-    # determine pool size
-    pool_length = dnriver_milemrkr - upriver_milemrkr
-    # calculate an average slope for the pool
-    per_mile_slope = slope / pool_length
-    # calculate projected level
+    pool_length = dnriver_milemrkr - upriver_milemrkr  # determine pool size
+    per_mile_slope = slope / pool_length  # calculate an average slope for the pool
     projection = (
         dnriver_milemrkr - LOCATION_OF_INTEREST
-    ) * per_mile_slope + dnriver_level
+    ) * per_mile_slope + dnriver_level  # calculate projected level
+    return projection
+
+
+@logger.catch
+def assemble_text(dict_data, forecast_data, db):
+    """ extract guage readings from dict and calculate river slope.
+    build tweet text from results.
+    """
+    dnriver = extract_guage_data(dict_data, DNRIVERDAM)
+    upriver = extract_guage_data(dict_data, UPRIVERDAM)
+    projection = calculate_level(upriver, dnriver)
+    upriver_name, upriver_level, _upriver_milemrkr, _upriver_elevation = upriver
+    dnriver_name, dnriver_level, _dnriver_milemrkr, _dnriver_elevation = dnriver
+
+    dnriver_fcst = extract_guage_data(forecast_data, DNRIVERDAM)
+    upriver_fcst = extract_guage_data(forecast_data, UPRIVERDAM)
+    forecast = calculate_level(upriver_fcst, dnriver_fcst)
+
     # build text of tweet
-    t1 = f"Latest Observation: {upriver_name} {upriver_level}ft"
-    t2 = f" {dnriver_name} {dnriver_level}ft"
-    t3 = f" Calculated Level at Bushmans: {projection:.2f}ft"
-    tweet = t1 + t2 + t3 + " ::: Data source: http://portky.com/river.php"
+    t1 = f"Latest Observation:{upriver_name} {upriver_level}ft."
+    t2 = f" {dnriver_name} {dnriver_level}ft."
+    t3 = f" Calculated Level at Bushmans:{projection:.2f}ft. future:{forecast:.2f}ft."
+    tweet = f"{t1}{t2}{t3} ::: Data source: http://portky.com/river.php"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
     # place this river level projection into longterm storage database
@@ -272,7 +300,7 @@ def build_tweet(rivr_conditions_dict, db):
     logger.debug(f"Latest dict contents: {latest_dict}")
     # TODO extract 1 forecast level for each dam
     forecast_dict = extract_forecast(obsv_dict)
-    tweet = assemble_text(latest_dict, db)
+    tweet = assemble_text(latest_dict, forecast_dict, db)
     if tweet == "":
         logger.error(f"Did not generate a tweet string.")
     return tweet
