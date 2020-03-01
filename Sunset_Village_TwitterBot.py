@@ -34,6 +34,10 @@ PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
 PupDB_ACTIONkey = "CurrentFloodingActionLevel"
+HIGHEST_TAG = "Highest  Observation:"
+LATEST_TAG = "Latest  observed"
+FORECAST_TAG = "Forecast:"
+OBSERVATION_TAGS = [LATEST_TAG, HIGHEST_TAG, FORECAST_TAG]
 
 ACTION_LABELS = [
     "No Flooding",
@@ -58,7 +62,7 @@ TWEET_FREQUENCY = [
 # ACTION_LEVELS = [21, 23, 30, 38]
 # ACTION_DICT = dict(zip(ACTION_LEVELS, ACTION_LABELS))
 LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
-OBSERVATION_TAGS = ["Latest", "Highest"]
+
 
 from twython import Twython, TwythonError
 from TwitterCredentials import APP_KEY
@@ -90,7 +94,8 @@ def test_tweet(db):
 
 @logger.catch
 def send_tweet(db, time, tweet, twttr):
-    """Accept a datetime object, a tweet string and a Twython object. Place tweet and updtae filesystem storage to reflect activities.
+    """Accept a database object, datetime object, a tweet string and a Twython object. 
+    Place tweet and update filesystem storage to reflect activities.
     """
     # place tweet time into longterm storage
     db.set(PupDB_MRTkey, str(time))
@@ -112,7 +117,8 @@ def send_tweet(db, time, tweet, twttr):
 
 @logger.catch
 def sanitize(itm):
-    """ Observations from NOAA have a format discrepacy between 'Latest' entries
+    """ Accept argument as a list of NOAA details. 
+    Observations from NOAA have a format discrepacy between 'Latest' entries
     and all other forms of entry. This function looks for those entries and
     'Standardizes' them.
     """
@@ -137,6 +143,7 @@ def extract_data(map_data, lbl_str):
     observations = {}
     for line in map_data.keys():
         logger.debug(f"Map Data Key: {line}")
+        logger.debug(f'data:{map_data[line][0]} label:{lbl_str}')
         if map_data[line][0] == lbl_str:
             key = f"{map_data[line][-3]}{map_data[line][-1]}"
             logger.debug(f"Observation Tag: {key}")
@@ -159,7 +166,7 @@ def extract_forecast(obsv_data):
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
         damname = obsv_data[line][-3]
-        if obsv_data[line][1] == "Forecast:":
+        if obsv_data[line][1] == FORECAST_TAG:
             logger.debug("Forecast line:")
             logger.debug(observations[damname])
             if damname not in observations.keys():
@@ -182,7 +189,7 @@ def extract_latest(obsv_data):
     for line in obsv_data.keys():
         logger.debug(obsv_data[line])
         damname = obsv_data[line][-3]
-        if obsv_data[line][0] == "Latest":
+        if obsv_data[line][0] == LATEST_TAG:
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
                 logger.debug("Latest line:")
@@ -196,9 +203,13 @@ def assemble_text(dict_data, db):
         logger.debug("assemble tweet input line:")
         logger.debug(f"Entry[{key}]:{str(dict_data[key])}")
         date = dict_data[key][-1]
-        level_obsrvd = float(dict_data[key][2])
-        milemrkr = float(dict_data[key][-4])
-        elevate = float(dict_data[key][-2])
+        try:
+            level_obsrvd = float(dict_data[key][1])
+            milemrkr = float(dict_data[key][-4])
+            elevate = float(dict_data[key][-2])
+        except ValueError:
+            logger.error(f'Did not retrieve correct data from source.')
+            return '' # error condition
         if dict_data[key][-3] == UPRIVERDAM:
             upriver_name = f"{key}{date}"
             upriver_level = level_obsrvd
@@ -256,10 +267,14 @@ def build_tweet(rivr_conditions_dict, db):
     for lbl in OBSERVATION_TAGS:
         obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
     # extract 1 latest observation for each dam
+    logger.debug(f'Observation dict: {obsv_dict}')
     latest_dict = extract_latest(obsv_dict)
+    logger.debug(f'Latest dict contents: {latest_dict}')
     # TODO extract 1 forecast level for each dam
-    # forecast_dict = extract_forecast(obsv_dict)
+    forecast_dict = extract_forecast(obsv_dict)
     tweet = assemble_text(latest_dict, db)
+    if tweet == '':
+        logger.error(f'Did not generate a tweet string.')
     return tweet
 
 
@@ -299,7 +314,10 @@ def UpdatePrediction(twtr, time, db):
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS
         data = get_level_data()
         status = build_tweet(data, db)
-        send_tweet(db, time, status, twtr)
+        if len(status) > 0:
+            send_tweet(db, time, status, twtr)
+        else:
+            logger.error(f'Did not tweet. No tweet generated.')
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds

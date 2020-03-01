@@ -6,28 +6,34 @@ river level data for both Markland and McAlpine dams. By using the mileage marke
 the level of the river at that point can be calculated.
 """
 
-from NWS_River_Data_scrape_NEW import ISO_datestring
+from NWS_River_Data_scrape_NEW import processRiverData
+
+def test_processRiverData():
+    pd = processRiverData()
+    assert type(pd) == dict
+    assert len(pd) > 0
+    return
 
 
-def test_ISO_datestring():
-    """should return a string representing date and time.
-    """
-    from dateparser.search import search_dates
-    # generate a datetime object
-    hypothesis.strategies.datetimes(
-        min_value=datetime.datetime(1, 1, 1, 0, 0),
-        max_value=datetime.datetime(9999, 12, 31, 23, 59, 59, 999999),
-        timezones=none(),
-    )
-    # convert it to string
-    isodatestr = dt.isoformat()
-    # convert string to datetime
-    searchdate = search_dates(isodatestr, languages=["en"])
-    # compare results report failures
-    assert isodatestr == searchdate.isoformat()
-    # repeat 50,000 times
+from hypothesis import given
+import hypothesis.strategies as hst
+
+def decode(s):
+    return s
+
+def encode(s):
+    return s
+
+@given(hst.text())
+def test_decode_inverts_encode(s):
+    assert decode(encode(s)) == s
+
+@given(hst.lists(hst.text()))
+def test_ISO_datestring(l):
+    return
 
 
+# examples from pytest book
 from collections import namedtuple
 
 Task = namedtuple("Task", ["summary", "owner", "done", "id"])
