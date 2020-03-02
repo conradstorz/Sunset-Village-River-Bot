@@ -116,7 +116,6 @@ def current_river_conditions(monitoring_point, dct):
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
-
             #logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
@@ -137,18 +136,15 @@ def current_river_conditions(monitoring_point, dct):
             else:
                 logger.debug("no date found")
                 logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
-                logger.debug("datestamp search result:" + str(date_iso))
+                logger.debug("datestamp search result:" + type(searchdate))
                 logger.debug(saferepr(child.attrib))
         except ValueError as e:
             logger.debug("no date")
-            logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
-            logger.debug("datestamp search result:" + str(date_iso))
+            logger.debug("child element result:" + str(child))
             logger.debug(saferepr(e))
         except KeyError:
             logger.debug("no title")
-            logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
-            logger.debug("datestamp search result:" + str(date_iso))
-            logger.debug(saferepr(child.attrib))
+            logger.debug("child element result:" + str(child))
     logger.debug(f"Current_River_Conditions function results: {saferepr(map_dict)}")
     return map_dict
 
