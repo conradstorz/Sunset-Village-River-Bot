@@ -136,7 +136,7 @@ def current_river_conditions(monitoring_point, dct):
             else:
                 logger.debug("no date found")
                 logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
-                logger.debug("datestamp search result:" + type(searchdate))
+                logger.debug(f"datestamp search result:{type(searchdate)}")
                 logger.debug(saferepr(child.attrib))
         except ValueError as e:
             logger.debug("no date")
