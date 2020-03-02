@@ -327,6 +327,7 @@ def UpdatePrediction(twtr, time, db):
     MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
     prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
     MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
+    logger.info(f'Most recent level: {MOST_RECENT_LEVEL}')
     priority = QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL)
     logger.info(f"Priority: {priority}")
     MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
@@ -356,8 +357,9 @@ def UpdatePrediction(twtr, time, db):
 @logger.catch
 def DisplayLevel(level):
     global sense
+    print(level)
     if SenseHatLoaded:
-        # TODO add aditonal data like temp and humidity of server hat
+        # TODO add additonal data like temp and humidity of server hat
         sense.show_message(f"{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
     return
 
