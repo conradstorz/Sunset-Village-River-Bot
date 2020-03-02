@@ -357,7 +357,6 @@ def UpdatePrediction(twtr, time, db):
 @logger.catch
 def DisplayLevel(level):
     global sense
-    print(level)
     if SenseHatLoaded:
         # TODO add additonal data like temp and humidity of server hat
         sense.show_message(f"{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
@@ -388,15 +387,14 @@ def Main(credentials):
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
         while wait > 0:
             wait = wait - 1
-            if (wait % 10) == 0: # update external displays connected to server each ten seconds.
-                startDisplay = datetime.now()
+            if int(time.time() % 10) == 0: # update external displays connected to server each ten seconds.
+                startDisplay = time.time()
                 DisplayLevel(MOST_RECENT_LEVEL)
-                endDisplay = datetime.now()
+                endDisplay = time.time()
                 elapsed = endDisplay - startDisplay  # returns a timedelta object
-                pause = elapsed.total_seconds()
-                wait = wait - pause
+                wait = wait - elapsed
                 print(".", end="", flush=True)
-            if (wait % 50) == 0: # every 50 seconds send a progress indication to attached display.
+            if int(time.time() % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
                 print(f"Wait time remaining: {wait}")
             time.sleep(1)  # delay until next check
