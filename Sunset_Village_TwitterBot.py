@@ -389,9 +389,12 @@ def Main(credentials):
         while wait > 0:
             wait = wait - 1
             if (wait % 10) == 0: # update external displays connected to server each ten seconds.
-                print(datetime.now())
+                startDisplay = datetime.now()
                 DisplayLevel(MOST_RECENT_LEVEL)
-                print(datetime.now())
+                endDisplay = datetime.now()
+                elapsed = endDisplay - startDisplay  # returns a timedelta object
+                pause = elapsed.total_seconds()
+                wait = wait - pause
                 print(".", end="", flush=True)
             if (wait % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
