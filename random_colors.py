@@ -8,7 +8,7 @@ sense = SenseHat()
 
 sense.clear(255, 255, 255)
 
-with open("data_file.json", "r") as read_file:
+with open("rgb_color_codes.json", "r") as read_file:
     color_dict = json.load(read_file)
 
 while True:
@@ -17,4 +17,3 @@ while True:
     sense.clear(color_dict[color])
     sleep(1)
 
-    
