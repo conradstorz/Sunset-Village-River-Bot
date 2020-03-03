@@ -31,6 +31,7 @@ def Set_Random_Pixels(sense):
         pixel_y = choice(y)
         field[pixel_x * 8 + pixel_y] = 0
         sense.set_pixel(pixel_x, pixel_y, color_dict[color]['rgb'])
+        sleep(sum(field)/100)
     return
 
 
