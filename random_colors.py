@@ -16,6 +16,6 @@ keys = list(color_dict.keys())
 while True:
     color = choice(keys)
     print(color)
-    sense.clear(color_dict[color])
+    sense.clear(color_dict[color]['rgb'])
     sleep(1)
 
