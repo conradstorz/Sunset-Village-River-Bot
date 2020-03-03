@@ -24,5 +24,5 @@ while True:
 
     #print(color)
     sense.set_pixel(pixel_x, pixel_y, color_dict[color]['rgb'])
-    sleep(.1)
+    #sleep(.1)
 
