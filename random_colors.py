@@ -4,6 +4,10 @@ from time import sleep
 import json
 from sense_hat import SenseHat
 
+index = list(range(8))
+x = index
+y = index
+
 sense = SenseHat()
 sense.low_light = True
 sense.clear(255, 255, 255)
@@ -15,7 +19,10 @@ keys = list(color_dict.keys())
 
 while True:
     color = choice(keys)
-    print(color)
-    sense.clear(color_dict[color]['rgb'])
-    sleep(.5)
+    pixel_x = choice(X)
+    pixel_y = choice(y)
+
+    #print(color)
+    sense.setpixel(pixel_x, Pixel_y, color_dict[color]['rgb'])
+    sleep(.1)
 
