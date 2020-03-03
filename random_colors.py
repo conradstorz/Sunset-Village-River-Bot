@@ -5,7 +5,7 @@ import json
 from sense_hat import SenseHat
 
 sense = SenseHat()
-
+sense.low_light = True
 sense.clear(255, 255, 255)
 
 with open("rgb_color_codes.json", "r") as read_file:
@@ -17,5 +17,5 @@ while True:
     color = choice(keys)
     print(color)
     sense.clear(color_dict[color]['rgb'])
-    sleep(1)
+    sleep(.5)
 
