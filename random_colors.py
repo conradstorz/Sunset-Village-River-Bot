@@ -19,10 +19,10 @@ keys = list(color_dict.keys())
 
 while True:
     color = choice(keys)
-    pixel_x = choice(X)
+    pixel_x = choice(x)
     pixel_y = choice(y)
 
     #print(color)
-    sense.set_pixel(pixel_x, Pixel_y, color_dict[color]['rgb'])
+    sense.set_pixel(pixel_x, pixel_y, color_dict[color]['rgb'])
     sleep(.1)
 
