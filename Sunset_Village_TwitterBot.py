@@ -386,18 +386,18 @@ def Main(credentials):
         TimeNow = datetime.now()
         wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
         while wait > 0:
-            wait = wait - 1
-            if int(time.time() % 10) == 0: # update external displays connected to server each ten seconds.
-                startDisplay = time.time()
+            startDisplay = int(time.time())           
+            time.sleep(1) # guarantee at least a one second pause
+            if (startDisplay % 10) == 0: # update external displays connected to server each ten seconds.
                 DisplayLevel(MOST_RECENT_LEVEL)
-                endDisplay = time.time()
-                elapsed = endDisplay - startDisplay  # returns a timedelta object
-                wait = wait - elapsed
                 print(".", end="", flush=True)
-            if int(time.time() % 50) == 0: # every 50 seconds send a progress indication to attached display.
+            if (startDisplay % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
                 print(f"Wait time remaining: {wait}")
-            time.sleep(1)  # delay until next check
+            endDisplay = int(time.time()) 
+            elapsed = endDisplay - startDisplay 
+            print(elapsed)             
+            wait = wait - elapsed
     return
 
 
