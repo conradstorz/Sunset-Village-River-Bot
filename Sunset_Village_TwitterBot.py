@@ -324,11 +324,11 @@ def UpdatePrediction(twtr, time, db):
     tm = datetime obj representing current time
     db = PupDB obj for persistant storage on local machine
     """
-    MOST_RECENT_TWEET_TIME = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
-    prevTweet = parser.parse(MOST_RECENT_TWEET_TIME)  # convert back to datetime
-    MOST_RECENT_LEVEL = db.get(PupDB_MRLkey)  # recover recent level
-    logger.info(f'Most recent level: {MOST_RECENT_LEVEL}')
-    priority = QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL)
+    last_tweet_time = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
+    prevTweet = parser.parse(last_tweet_time)  # convert back to datetime
+    latest_level = db.get(PupDB_MRLkey)  # recover recent level
+    logger.info(f'Most recent level: {latest_level}')
+    priority = QuantifyFlooding(latest_level, MINIMUM_CONCERN_LEVEL)
     logger.info(f"Priority: {priority}")
     MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
     logger.info(f"Time between Tweets: {MINIMUM_TIME_BETWEEN_TWEETS}")
@@ -346,12 +346,13 @@ def UpdatePrediction(twtr, time, db):
         if len(status) > 0:
             send_tweet(db, time, status, twtr)
         else:
-            logger.error(f"Did not tweet. No tweet generated.")
+            logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
         logger.info(f"Recommend waiting {waitTime} seconds.")
-    return (waitTime, MOST_RECENT_LEVEL)
+    latest_level = db.get(PupDB_MRLkey)  # recover recent level    
+    return (waitTime, latest_level)
 
 
 @logger.catch
@@ -374,23 +375,25 @@ def Main(credentials):
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
     storage_db = PupDB(PupDB_FILENAME)
-    MOST_RECENT_TWEET = storage_db.get(PupDB_MRTkey)
-    MOST_RECENT_LEVEL = storage_db.get(PupDB_MRLkey)
-    if MOST_RECENT_TWEET == None:  # Pre-load empty database
-        MOST_RECENT_TWEET = str(TimeNow)
-        MOST_RECENT_LEVEL = MINIMUM_CONCERN_LEVEL
-        storage_db.set(PupDB_MRTkey, MOST_RECENT_TWEET)
-        storage_db.set(PupDB_MRLkey, MOST_RECENT_LEVEL)
+    last_tweet = storage_db.get(PupDB_MRTkey)
+    last_level = storage_db.get(PupDB_MRLkey)
+    if last_tweet == None:  # Pre-load empty database
+        last_tweet = str(TimeNow)
+        last_level = MINIMUM_CONCERN_LEVEL
+        storage_db.set(PupDB_MRTkey, last_tweet)
+        storage_db.set(PupDB_MRLkey, last_level)
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
-        wait, MOST_RECENT_LEVEL = UpdatePrediction(twitter, TimeNow, storage_db)
+        wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
+        print(f'New wait time: {wait}')
+        print(f'New Level: {new_level}')
         while wait > 0:
             startDisplay = int(time.time())           
             time.sleep(1) # guarantee at least a one second pause
             if (startDisplay % 10) == 0: # update external displays connected to server each ten seconds.
                 print(".", end="", flush=True)   
-                DisplayLevel(MOST_RECENT_LEVEL)
+                DisplayLevel(new_level)
             if (startDisplay % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
                 print(f"Wait time remaining: {wait}")
