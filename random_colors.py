@@ -23,6 +23,6 @@ while True:
     pixel_y = choice(y)
 
     #print(color)
-    sense.setpixel(pixel_x, Pixel_y, color_dict[color]['rgb'])
+    sense.set_pixel(pixel_x, Pixel_y, color_dict[color]['rgb'])
     sleep(.1)
 
