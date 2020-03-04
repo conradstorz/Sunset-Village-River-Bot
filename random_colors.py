@@ -36,7 +36,7 @@ def Set_Random_Pixels(senseObj, x = index, y = index, pace = .01, rounds = 99):
         field[pixel_x * 8 + pixel_y] = iters - 1
         senseObj.set_pixel(pixel_x, pixel_y, color_dict[color]['rgb'])
         sleep((sum(field) / rounds)/(100 / pace))
-    return
+    return color
 
 
 def random_to_solid(senseObj, colorName = 'black', x = index, y = index):

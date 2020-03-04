@@ -363,8 +363,8 @@ def DisplayLevel(level):
         sense.show_message(f"{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
         time.sleep(.1)
         # TODO monitor joystick input to exit pixel display early
-        Set_Random_Pixels(sense)
-        random_to_solid(sense)
+        lastColor = Set_Random_Pixels(sense)
+        random_to_solid(sense, colorName = lastColor)
     return
 
 
