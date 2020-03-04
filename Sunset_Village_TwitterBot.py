@@ -362,7 +362,7 @@ def DisplayLevel(level):
         # TODO add additonal data like temp and humidity of server hat
         sense.show_message(f"{level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
         time.sleep(.1)
-        Set_Random_Pixels(sense)
+        Set_Random_Pixels(sense, x=[0,1], y=[0,1,2,3,4,5,6,7])
     return
 
 
