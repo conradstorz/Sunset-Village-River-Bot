@@ -25,7 +25,7 @@ from pupdb.core import PupDB
 try:
     SenseHatLoaded = True
     from sense_hat import SenseHat
-    from random_colors import Set_Random_Pixels
+    from random_colors import Set_Random_Pixels, random_to_solid
     sense = SenseHat()
 except ImportError as e:
     SenseHatLoaded = False
@@ -364,6 +364,7 @@ def DisplayLevel(level):
         time.sleep(.1)
         # TODO monitor joystick input to exit pixel display early
         Set_Random_Pixels(sense)
+        random_to_solid(sense)
     return
 
 

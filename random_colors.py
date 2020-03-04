@@ -39,6 +39,18 @@ def Set_Random_Pixels(senseObj, x = index, y = index, pace = .01, rounds = 99):
     return
 
 
+def random_to_solid(senseObj, colorName = 'black', x = index, y = index):
+    if colorName not in color_dict.keys():
+        raise ValueError
+    field = [1 for i in range(len(x)*len(y))]
+    while sum(field) > 0:
+        pixel_x = choice(x)
+        pixel_y = choice(y)
+        field[pixel_x * 8 + pixel_y] = 0
+        senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]['rgb'])  
+        sleep(.1)      
+    return
+
 def Main(sense):
     Set_Random_Pixels(sense)
     sense.low_light = True
