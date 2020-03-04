@@ -18,17 +18,18 @@ with open("rgb_color_codes.json", "r") as read_file:
 COLOR_KEYS = list(color_dict.keys())
 index = list(range(8))
 
-def Set_Random_Pixels(senseObj, x = index, y = index, pace = 5):
+def Set_Random_Pixels(senseObj, x = index, y = index, pace = .5, rounds = 3):
     """ Fill display with random pixel colors.
     """
     # TODO range check x,y, and pace
     # TODO type check senseObj
-    field = [1 for i in range(len(x)*len(y))]
+    field = [rounds for i in range(len(x)*len(y))]
     while sum(field) > 0:
         color = choice(COLOR_KEYS)
         pixel_x = choice(x)
         pixel_y = choice(y)
-        field[pixel_x * 8 + pixel_y] = 0
+        iters = field[pixel_x * 8 + pixel_y]
+        field[pixel_x * 8 + pixel_y] = iters - 1
         senseObj.set_pixel(pixel_x, pixel_y, color_dict[color]['rgb'])
         sleep(sum(field)/(100 / pace))
     return
