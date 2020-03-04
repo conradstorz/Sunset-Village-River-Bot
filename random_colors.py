@@ -18,8 +18,12 @@ with open("rgb_color_codes.json", "r") as read_file:
 COLOR_KEYS = list(color_dict.keys())
 index = list(range(8))
 
-def Set_Random_Pixels(senseObj, x = index, y = index, pace = .01, rounds = 9):
+def Set_Random_Pixels(senseObj, x = index, y = index, pace = .01, rounds = 99):
     """ Fill display with random pixel colors.
+    Params: senseObj = senseHat Object pointer (required)
+    Optional: ,x,y list of index values [valid=0-7 and 1 to 8 values] (size of area to display)
+    Optional: ,pace >0<=1 (speed of change)
+    Optional: ,rounds >=1 (number of times each pixel will change on average)
     """
     # TODO range check x,y, and pace
     # TODO type check senseObj
