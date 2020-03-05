@@ -46,9 +46,9 @@ def random_to_solid(senseObj, colorName = 'black', x = index, y = index):
     while sum(field) > 0:
         pixel_x = choice(x)
         pixel_y = choice(y)
-        pxl = field[pixel_x * 8 + pixel_y]
-        if pxl not = 0:
-            pxl = 0
+        # pxl = field[pixel_x * 8 + pixel_y]
+        if field[pixel_x * 8 + pixel_y] != 0:
+            field[pixel_x * 8 + pixel_y] = 0
             senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]['rgb'])  
         sleep(.1)      
     return
