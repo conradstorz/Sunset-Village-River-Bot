@@ -39,18 +39,29 @@ def Set_Random_Pixels(senseObj, x = index, y = index, pace = .01, rounds = 99):
     return color
 
 
-def random_to_solid(senseObj, colorName = 'black', x = index, y = index):
+def random_to_solid(senseObj, colorName = 'black', x = index, y = index, fast = False):
     if colorName not in color_dict.keys():
         raise ValueError
-    field = [1 for i in range(len(x)*len(y))]
-    while sum(field) > 0:
-        pixel_x = choice(x)
-        pixel_y = choice(y)
-        # pxl = field[pixel_x * 8 + pixel_y]
-        if field[pixel_x * 8 + pixel_y] != 0:
-            field[pixel_x * 8 + pixel_y] = 0
-            senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]['rgb'])  
-        sleep(.1)      
+    # TODO range check x,y
+    if fast == True:
+        field = list(range(len(x)*len(y)))
+        # scramble list        
+        while len(field) > 0:
+            pxl = field.pop()
+            x = int(pxl / 8)
+            y = int(pxl % 8)
+            senseObj.set_pixel(x, y, color_dict[colorName]['rgb'])
+
+    else:
+        field = [1 for i in range(len(x)*len(y))]
+        while sum(field) > 0:
+            pixel_x = choice(x)
+            pixel_y = choice(y)
+            pxl = pixel_x * 8 + pixel_y
+            if field[pxl] != 0:
+                field[pxl] = 0
+                senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]['rgb'])  
+            sleep(.1)      
     return
 
 def Main(sense):
