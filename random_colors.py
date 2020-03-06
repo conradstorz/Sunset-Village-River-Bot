@@ -29,7 +29,7 @@ def Set_Random_Pixels(senseObj, x=index, y=index, pace=0.01, rounds=99):
     # TODO range check x,y, and pace
     # TODO type check senseObj
     field = [int(rounds) for i in range(len(x) * len(y))]
-    while sum(field) > 0:
+    while sum(field) > -(rounds*100): # extend run time 
         color = choice(COLOR_KEYS)
         pixel_x = choice(x)
         pixel_y = choice(y)
