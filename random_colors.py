@@ -36,7 +36,11 @@ def Set_Random_Pixels(senseObj, x=index, y=index, pace=0.01, rounds=99):
         iters = field[pixel_x * 8 + pixel_y]
         field[pixel_x * 8 + pixel_y] = iters - 1
         senseObj.set_pixel(pixel_x, pixel_y, color_dict[color]["rgb"])
-        sleep((sum(field) / rounds) / (100 / pace))
+        delay = (sum(field) / rounds) / (100 / pace)
+        if delay > 0:
+            sleep(delay)
+        else:
+            sleep(.001)
     return color
 
 
