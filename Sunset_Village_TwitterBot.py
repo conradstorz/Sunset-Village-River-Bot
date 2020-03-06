@@ -340,10 +340,12 @@ def UpdatePrediction(twtr, time, db):
     logger.info(f"Total number of seconds elapsed: {elapsed.total_seconds()}")
     if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
         logger.info("Tweeting...")
+        DisplayMessage("Reading new river level...")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS
         data = get_level_data()
         status = build_tweet(data, db)
         if len(status) > 0:
+            DisplayMessage("Tweeting...")
             send_tweet(db, time, status, twtr)
         else:
             logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
@@ -356,12 +358,12 @@ def UpdatePrediction(twtr, time, db):
 
 
 @logger.catch
-def DisplayLevel(level):
+def DisplayMessage(message):
     global sense
     if SenseHatLoaded:
         # TODO add additonal data like temp and humidity of server hat
-        sense.show_message(f"  {level:.2f}ft Latest {level:.2f}ft Level {level:.2f}ft")
-        time.sleep(.1)
+        sense.show_message(message)
+        time.sleep(1)
         # TODO monitor joystick input to exit pixel display early
         lastColor = Set_Random_Pixels(sense)
         random_to_solid(sense, colorName = lastColor)
@@ -397,7 +399,7 @@ def Main(credentials):
             time.sleep(1) # guarantee at least a one second pause
             if (startDisplay % 10) == 0: # update external displays connected to server each ten seconds.
                 print(".", end="", flush=True)   
-                DisplayLevel(new_level)
+                DisplayLevel(f"  {new_level:.2f}ft Latest {new_level:.2f}ft Level {new_level:.2f}ft")
             if (startDisplay % 50) == 0: # every 50 seconds send a progress indication to attached display.
                 print("")
                 print(f"Wait time remaining: {wait}")
