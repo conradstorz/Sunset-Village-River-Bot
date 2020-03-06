@@ -52,7 +52,7 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
             x = int(pxl / 8)
             y = int(pxl % 8)
             senseObj.set_pixel(x, y, color_dict[colorName]["rgb"])
-            sleep(.1)
+            sleep(len(field)/2*.1)
     else:
         field = [1 for i in range(len(x) * len(y))]
         while sum(field) > 0:
