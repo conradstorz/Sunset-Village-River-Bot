@@ -67,11 +67,14 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
                 field[pxl] = 0
                 senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]["rgb"])
             sleep(0.1)
-    return
+    return True
 
 
 def Main(sense):
-    Set_Random_Pixels(sense)
+    last = Set_Random_Pixels(sense)
+    random_to_solid(sense, colorName=last)
+    last = Set_Random_Pixels(sense, pace=.1)   
+    random_to_solid(sense, fast=True)
     sense.low_light = True
     sense.clear(255, 255, 255)
     return
