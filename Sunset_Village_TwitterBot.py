@@ -368,7 +368,7 @@ def DisplayMessage(message):
         # TODO monitor joystick input to exit pixel display early
         lastColor = Set_Random_Pixels(sense)
         random_to_solid(sense, colorName=lastColor, fast=True)
-    return
+    return True
 
 
 @logger.catch
