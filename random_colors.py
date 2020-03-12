@@ -3,6 +3,8 @@
 
 """ expose methods of setting random colors on the RaspberryPi SenseHat display.
 Depends on a JSON file declaring color names and RGB values.
+TODO expand to support 'NeoPixel' type leds through other devices and methods.
+TODO auto-detect various 'hats' and offer useful information back to caller.
 """
 
 from itertools import product
@@ -11,22 +13,33 @@ from time import sleep
 import json
 from sense_hat import SenseHat
 
+# detect various add-on Rpi hats
+try:
+    SenseHatLoaded = True
+    from sense_hat import SenseHat
+    from random_colors import Set_Random_Pixels, random_to_solid
 
+    sense = SenseHat()
+except ImportError as e:
+    SenseHatLoaded = False
+
+# Load color codes
 with open("rgb_color_codes.json", "r") as read_file:
     color_dict = json.load(read_file)
 
 COLOR_KEYS = list(color_dict.keys())
-index = list(range(8))
+
+index = list(range(8)) # establish a default index for 8x8 pixel disply
 
 
 def Set_Random_Pixels(senseObj, x=index, y=index, pace=0.01, rounds=99):
     """ Fill display with random pixel colors.
     Params: senseObj = senseHat Object pointer (required)
-    Optional: ,x,y list of index values [valid=0-7 and 1 to 8 values] (size of area to display)
+    Optional: ,x,y list of valid index values (zero based) (size of area to display)
     Optional: ,pace >0<=1 (speed of change)
     Optional: ,rounds >=1 (number of times each pixel will change on average)
     """
-    # TODO range check x,y, and pace
+    # TODO range check x,y, rounds and pace
     # TODO type check senseObj
     field = [int(rounds) for i in range(len(x) * len(y))]
     while sum(field) > -(rounds*100): # extend run time 
@@ -47,7 +60,7 @@ def Set_Random_Pixels(senseObj, x=index, y=index, pace=0.01, rounds=99):
 def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
     if colorName not in color_dict.keys():
         raise ValueError
-    # TODO range check x,y
+    # TODO range check x,y and fast
     if fast == True:
         field = list(range(len(x) * len(y)))
         shuffle(field)  # scramble list
@@ -68,6 +81,19 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
                 senseObj.set_pixel(pixel_x, pixel_y, color_dict[colorName]["rgb"])
             sleep(0.1)
     return True
+
+
+@logger.catch
+def DisplayMessage(senseObj, message, pause=1):
+    """ Place a text string on the display of the SenseHat.
+    Params: senseObj: required SenseHat Object, message: text string (required) 
+    """
+    # TODO range check inputs (example: pause must be >= 0)
+    if SenseHatLoaded:
+        # TODO trap exceptions
+        sense.show_message(str(message))
+        sleep(pause)
+    return
 
 
 def Main(sense):
