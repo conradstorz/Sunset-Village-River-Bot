@@ -55,7 +55,9 @@ def Set_Random_Pixels(senseObj, x=index, y=index, pace=0.01, rounds=99):
     return color
 
 
-def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
+def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False, flicker=True):
+    """flicker controls if display should animate during color unifomity process 
+    """
     if colorName not in color_dict.keys():
         raise ValueError
     # TODO range check x,y and fast
@@ -67,6 +69,11 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
             x = int(pxl / 8)
             y = int(pxl % 8)
             senseObj.set_pixel(x, y, color_dict[colorName]["rgb"])
+            if flicker == True:
+                for ndx in field:
+                    x = int(ndx / 8)
+                    y = int(ndx % 8)
+                    senseObj.set_pixel(x, y, color_dict[choice(COLOR_KEYS)]["rgb"])                                
             sleep(len(field)/2*.01)
     else:
         field = [1 for i in range(len(x) * len(y))]
