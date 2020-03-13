@@ -11,15 +11,13 @@ from itertools import product
 from random import choice, shuffle
 from time import sleep
 import json
-from sense_hat import SenseHat
+#from sense_hat import SenseHat
 
 # detect various add-on Rpi hats
 try:
     SenseHatLoaded = True
     from sense_hat import SenseHat
-    from random_colors import Set_Random_Pixels, random_to_solid
-
-    sense = SenseHat()
+    senseObj = SenseHat()
 except ImportError as e:
     SenseHatLoaded = False
 
@@ -83,7 +81,7 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False):
     return True
 
 
-@logger.catch
+#@logger.catch
 def DisplayMessage(senseObj, message, pause=1):
     """ Place a text string on the display of the SenseHat.
     Params: senseObj: required SenseHat Object, message: text string (required) 
@@ -91,7 +89,7 @@ def DisplayMessage(senseObj, message, pause=1):
     # TODO range check inputs (example: pause must be >= 0)
     if SenseHatLoaded:
         # TODO trap exceptions
-        sense.show_message(str(message))
+        senseObj.show_message(str(message))
         sleep(pause)
     return
 
@@ -107,5 +105,4 @@ def Main(sense):
 
 
 if __name__ == "__main__":
-    sense = SenseHat()
-    Main(sense)
+    Main(senseObj)
