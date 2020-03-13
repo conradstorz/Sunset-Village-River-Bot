@@ -61,9 +61,9 @@ def random_to_solid(senseObj, colorName="black", x=index, y=index, fast=False, f
     if colorName not in color_dict.keys():
         raise ValueError
     # TODO range check x,y and fast
+    field = list(range(len(x) * len(y)))
+    shuffle(field)  # scramble list
     if fast == True:
-        field = list(range(len(x) * len(y)))
-        shuffle(field)  # scramble list
         while len(field) > 0:
             pxl = field.pop()
             x = int(pxl / 8)
