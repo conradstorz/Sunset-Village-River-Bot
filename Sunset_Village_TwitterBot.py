@@ -34,6 +34,7 @@ except ImportError as e:
 PupDB_FILENAME = "SVTB-DB.json_db"
 PupDB_MRTkey = "MostRecentTweet"
 PupDB_MRLkey = "MostRecentRiverLevel"
+PupDB_MRFkey = "MostRecentForecastLevel"
 PupDB_ACTIONkey = "CurrentFloodingActionLevel"
 HIGHEST_TAG = "Highest  Observation:"
 LATEST_TAG = "Latest  observed"
@@ -271,6 +272,7 @@ def assemble_text(dict_data, forecast_data, db):
     logger.info(f"Length of Tweet {len(tweet)} characters.")
     # place this river level projection into longterm storage database
     db.set(PupDB_MRLkey, projection)
+    db.set(PupDB_MRFkey, forecast)
     return tweet
 
 
@@ -371,6 +373,18 @@ def DisplayMessage(message):
     return True
 
 
+def DetermineTrend(now, soon):
+    """ returns text describing if the trend of the river is rising or falling.
+    now = float value of current level of river
+    soon = float value of future level of river
+    """
+    if now > soon:
+        return 'Falling'
+    if now < soon:
+        return 'Rising'
+    return 'Flat'
+
+
 @logger.catch
 def Main(credentials):
     defineLoggers()
@@ -389,12 +403,17 @@ def Main(credentials):
         last_level = MINIMUM_CONCERN_LEVEL
         storage_db.set(PupDB_MRTkey, last_tweet)
         storage_db.set(PupDB_MRLkey, last_level)
+        forecast_level = last_level
+        storage_db.set(PupDB_MRFkey, forecast_level)
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
         wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
+        forecast_level = storage_db.get(PupDB_MRFkey)
+        trend = DetermineTrend(new_level, forecast_level)
         print(f"New wait time: {wait}")
         print(f"New Level: {new_level}")
+        print(f'Trend: {trend}')
         while wait > 0:
             startDisplay = int(time.time())
             time.sleep(1)  # guarantee at least a one second pause
@@ -403,7 +422,7 @@ def Main(credentials):
             ) == 0:  # update external displays connected to server each ten seconds.
                 print(".", end="", flush=True)
                 DisplayMessage(
-                    f"  {new_level:.2f}ft Latest {new_level:.2f}ft Level {new_level:.2f}ft"
+                    f"  {new_level:.2f}ft Latest. Trend {forecast_level:.2f}ft   Now {new_level:.2f}ft   Trend {forecast_level:.2f}ft"
                 )
             if (
                 startDisplay % 50
