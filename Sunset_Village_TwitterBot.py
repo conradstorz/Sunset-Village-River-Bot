@@ -422,7 +422,7 @@ def Main(credentials):
             ) == 0:  # update external displays connected to server each ten seconds.
                 print(".", end="", flush=True)
                 DisplayMessage(
-                    f"  {new_level:.2f}ft Latest. Trend {trend}   Now {new_level:.2f}ft   Trend {trend}"
+                    f"  {new_level:.2f}ft Latest. Trend: {trend}   Now {new_level:.2f}ft   Trend: {trend}"
                 )
             if (
                 startDisplay % 50
