@@ -379,10 +379,10 @@ def DetermineTrend(now, soon):
     soon = float value of future level of river
     """
     if now > soon:
-        return 'Falling'
+        return "Falling"
     if now < soon:
-        return 'Rising'
-    return 'Flat'
+        return "Rising"
+    return "Flat"
 
 
 @logger.catch
@@ -413,7 +413,7 @@ def Main(credentials):
         trend = DetermineTrend(new_level, forecast_level)
         print(f"New wait time: {wait}")
         print(f"New Level: {new_level}")
-        print(f'Trend: {trend}')
+        print(f"Trend: {trend}")
         while wait > 0:
             startDisplay = int(time.time())
             time.sleep(1)  # guarantee at least a one second pause
