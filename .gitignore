@@ -116,4 +116,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# vscode and pyvenv
 .vscode/settings.json
+riverbot/pyvenv.cfg
+riverbot/Scripts/*
+
