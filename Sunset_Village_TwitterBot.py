@@ -296,7 +296,11 @@ def build_tweet(rivr_conditions_dict, db):
     """
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
-        obsv_dict.update(extract_data(rivr_conditions_dict, lbl))
+        current_observations = extract_data(rivr_conditions_dict, lbl)
+        if current_observations == {}:
+            logger.error(f"No data returned from {lbl}.")
+            return ""  # error condition
+        obsv_dict.update(current_observations)
     # extract 1 latest observation for each dam
     logger.debug(f"Observation dict: {obsv_dict}")
     latest_dict = extract_latest(obsv_dict)
