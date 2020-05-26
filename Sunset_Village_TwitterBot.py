@@ -27,7 +27,7 @@ try:
     from sense_hat import SenseHat
     from random_colors import Set_Random_Pixels, random_to_solid
 
-    sense = SenseHat()
+    SENSEHAT = SenseHat()
 except ImportError as e:
     SenseHatLoaded = False
 
@@ -366,14 +366,14 @@ def UpdatePrediction(twtr, time, db):
 
 @logger.catch
 def DisplayMessage(message):
-    global sense
+    global SENSEHAT
     if SenseHatLoaded:
         # TODO add additonal data like temp and humidity of server hat
-        sense.show_message(message)
+        SENSEHAT.show_message(message)
         time.sleep(1)
         # TODO monitor joystick input to exit pixel display early
-        lastColor = Set_Random_Pixels(sense)
-        random_to_solid(sense, colorName=lastColor, fast=True)
+        lastColor = Set_Random_Pixels(SENSEHAT)
+        random_to_solid(SENSEHAT, colorName=lastColor, fast=True)
     return True
 
 
