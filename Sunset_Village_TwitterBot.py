@@ -91,7 +91,6 @@ def test_tweet(db):
     data = get_level_data()
     logger.info(f"get_level_data returned: {data}")
     # data contains ALL "imortant" levels
-    # logger.debug(str(data))
     # TODO create function to extract only 6 most relevent current,highest,eventual levels
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:

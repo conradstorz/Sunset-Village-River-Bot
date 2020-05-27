@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains code that can scrape the Nation Weather Service (NWS) website and read the 
+""" This file contains code that can scrape the National Weather Service (NWS) website and read the 
 river level data for both Markland and McAlpine dams. By using the mileage marker for Bushman's Lake 
 the level of the river at that point can be calculated.
 """
@@ -218,13 +218,14 @@ def MAIN():
     map_data = processRiverData()
     if map_data == []:
         return False  # error condition
-    lst = []
     for item in map_data:
-        lst.append(map_data[item])
         print(item, map_data[item])
-    print(tabulate(lst))
     return True
 
 
 if __name__ == "__main__":
-    MAIN()
+    result = MAIN()
+    if result == True:
+        logger.info("Program ended normally.")
+    else:        
+        logger.info("Program ended abnormally.")   
