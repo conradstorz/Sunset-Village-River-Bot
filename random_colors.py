@@ -68,7 +68,7 @@ def random_to_solid(
     field = list(range(len(x) * len(y)))
     shuffle(field)  # scramble list
     if fast == True:
-        while len(field) > 0:
+        while field:
             pxl = field.pop()
             x = int(pxl / 8)
             y = int(pxl % 8)

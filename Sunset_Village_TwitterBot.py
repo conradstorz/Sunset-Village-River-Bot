@@ -180,9 +180,9 @@ def extract_forecast(obsv_data):
     logger.debug("Scanning for Highest Forecast observations:")
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
-        damname = obsv_data[line][-3]
         if obsv_data[line][0] == FORECAST_TAG:
             logger.debug("Highest Forecast line:")
+            damname = obsv_data[line][-3]
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
             if float(observations[damname][1]) < float(obsv_data[line][1]):
@@ -203,8 +203,8 @@ def extract_latest(obsv_data):
     logger.debug("Scanning for latest observations:")
     for line in obsv_data.keys():
         logger.debug(obsv_data[line])
-        damname = obsv_data[line][-3]
         if obsv_data[line][0] == LATEST_TAG:
+            damname = obsv_data[line][-3]
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
                 logger.debug("Latest line:")
@@ -401,7 +401,7 @@ def Main(credentials):
     storage_db = PupDB(PupDB_FILENAME)
     last_tweet = storage_db.get(PupDB_MRTkey)
     last_level = storage_db.get(PupDB_MRLkey)
-    if last_tweet == None:  # Pre-load empty database
+    if last_tweet is None:    # Pre-load empty database
         last_tweet = str(TimeNow)
         last_level = MINIMUM_CONCERN_LEVEL
         storage_db.set(PupDB_MRTkey, last_tweet)
