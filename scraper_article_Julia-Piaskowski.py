@@ -23,7 +23,7 @@ def get_NWS_web_data(site):
 
 
 def FixDate(s, currentyear, time_zone = 'UTC'):
-    """split date from time and add timezone label.
+    """Split date from time and add timezone label.
     Unfortunately, NWS chose not to include the year. 
     This will be problematic when forecast dates are into the next year.
     If Observation dates are in December, Forecast dates must be checked and fixed for roll over into next year.
