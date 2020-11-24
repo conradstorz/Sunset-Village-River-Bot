@@ -1,6 +1,9 @@
 # Secret Keys
 *Credentials.py
 
+# data scrape files
+CSV_DATA
+
 # zipped logs
 *.log.zip
 

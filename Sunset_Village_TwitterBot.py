@@ -224,7 +224,9 @@ def extract_guage_data(dict_data, damname):
             elevate = float(dict_data[damname][-2])
         except ValueError:
             logger.error(f"Did not retrieve correct data from source.")
-        guage_reading = (damname + date, level_obsrvd, milemrkr, elevate)
+            guage_reading = None
+        else:
+            guage_reading = (damname + date, level_obsrvd, milemrkr, elevate)
     return guage_reading
 
 
