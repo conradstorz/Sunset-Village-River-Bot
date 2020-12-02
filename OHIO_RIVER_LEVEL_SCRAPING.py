@@ -107,7 +107,8 @@ def Main():
             OD = f"{OUTPUT_ROOT}{output_directory}"
             FN = f"{time_now_string}"
             write_csv([item], filename=FN, directory=OD)
-
+        sleep(1) # guarnatee next point of interest gets a new timestamp.
+        # some scrapes process in under 1 second and result in data collision.
         print(time_now_string)
     return True
 
