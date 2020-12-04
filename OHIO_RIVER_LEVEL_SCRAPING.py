@@ -42,14 +42,22 @@ def get_NWS_web_data(site):
 
 
 def FixDate(s, currentyear, time_zone="UTC"):
-    """Split date from time and add timezone label.
-    Unfortunately, NWS chose not to include the year.
+    """Split date from time timestamp provided by NWS and add timezone label as well as correct year.
+    Unfortunately, NWS chose not to include the year in their observation/forecast data.
     This will be problematic when forecast dates are into the next year.
     If Observation dates are in December, Forecast dates must be checked and fixed for roll over into next year.
+    # NOTE: forecast dates will appear to be in the past as compared to the scrapping date if they are actually supposed to be next year.
     """
+    # TODO get the NOW datetime so we can identify dates that rollover into next year.
+    # QUESTION: what problems do past observations cause when new year arrives? 
+    # QUESTION: Do I need to know if this date represents an OBSERVATION so I can corectly apply the year to it?
     date_string, time_string = s.split()
     month_digits, day_digits = date_string.split("/")
-    return f"{currentyear}-{month_digits}-{day_digits}_{time_string}{time_zone}"
+    # TODO Add sanity check for 'currentyear' to ensure that it is a string representing 4 digits
+    fixed = f"{currentyear}-{month_digits}-{day_digits}_{time_string}{time_zone}"
+    # TODO create a datetime object from 'fixed' for use in determining future/past events
+    # TODO consider returning a datetime object and not a string.
+    return fixed
 
 
 def sort_and_label_data(web_data, guage_id, guage_string):
@@ -68,8 +76,8 @@ def sort_and_label_data(web_data, guage_id, guage_string):
                 element = data.contents[0]
                 pointer = i % 3  # each reading contains 3 unique data points
                 if pointer == 0:  # this is the element for date/time
-                    element = FixDate(element, "2020")
-                row_dict[labels[pointer]] = element
+                    element = FixDate(element, "2020") # NOTE: Future code might return a datetime object.
+                row_dict[labels[pointer]] = element # TODO Add sanity check for this value being a string not an object.
                 if pointer == 2:  # end of this reading
                     readings.append(row_dict)  # add to the compilation
                     # reset the dict for next reading
