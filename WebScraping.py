@@ -11,6 +11,9 @@ from contextlib import closing
 from bs4 import BeautifulSoup
 
 from loguru import logger
+from pathlib import Path
+from filehandling import check_and_validate
+from time_strings import UTC_NOW_STRING
 
 
 @logger.catch
@@ -55,10 +58,29 @@ def log_error(e):
     print(e)
 
 
+def save_html_text(txt):
+    """Place 'txt' in a file in the current working directory 
+    under a filename based on the current time.
+    This will be useful for additional review of accuracy in data extraction.
+    """
+    # create file path
+    filename = f'{UTC_NOW_STRING()}_webscrape.rawhtml'
+    dirobj = Path(Path.cwd())
+    dirobj.mkdir(parents=True, exist_ok=True)    
+    pathobj = check_and_validate(filename, dirobj)
+
+    with open(pathobj, "w") as txtfile:
+        txtfile.write(str(txt))
+    
+    return None
+
+
 @logger.catch
-def retrieve_cleaned_html(url):
+def retrieve_cleaned_html(url, cache=False):
     raw_resp = simple_get(url)
     if raw_resp is not None:
+        if cache:
+            save_html_text(raw_resp)
         # print(BeautifulSoup(raw_resp, "xml").prettify())
         return BeautifulSoup(raw_resp, "html.parser")
     return None

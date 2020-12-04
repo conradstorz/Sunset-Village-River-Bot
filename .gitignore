@@ -10,6 +10,9 @@ CSV_DATA
 # vscode.settings.json
 .vscode/
 
+# local webscrape cache files
+*.rawhtml
+
 # local DB files
 *.json_db
 
