@@ -106,6 +106,8 @@ def Main():
         time_now_string = UTC_NOW_STRING()
         raw_data, guage_id, friendly_name = get_NWS_web_data(point)
         # TODO verify webscraping success
+        # TODO store raw_data for ability to work on dates problem over the newyear transition.
+        # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
         data_list = sort_and_label_data(raw_data, guage_id, friendly_name)
         # TODO verify successful conversion of data
         for item in data_list:
