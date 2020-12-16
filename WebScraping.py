@@ -81,6 +81,5 @@ def retrieve_cleaned_html(url, cache=False):
     if raw_resp is not None:
         if cache:
             save_html_text(raw_resp)
-        # print(BeautifulSoup(raw_resp, "xml").prettify())
         return BeautifulSoup(raw_resp, "html.parser")
     return None
