@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # version 2.0
 """Create a file and populate with items from a data structure.
+    # TODO move this functionality into the filehandling module and standardize.
 """
 
 import csv
