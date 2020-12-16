@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """NWS website scraping for river guage observations and forecasts.
 This module will create local csv database of readings and forecasts.
+Also the raw_data from scraping the NWS is saved to a text file for later examination.
 Two datetimes are recorded. ScrapeTime and ForecastTime/ObservationTime.
 Data is tuple of level and flowrate. (currently no flow data is published)
 This program should be run daily (by cron for example).
@@ -9,14 +10,15 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 
-
-from WebScraping import retrieve_cleaned_html
-from time_strings import UTC_NOW_STRING
-from filehandling import create_timestamp_subdirectory_Structure
+# import custom modules
 from data2csv import write_csv
+from time_strings import UTC_NOW_STRING
+from WebScraping import retrieve_cleaned_html
+from filehandling import create_timestamp_subdirectory_Structure
+
+# import standard library modules
 from time import sleep
-from pathlib import Path
-from filehandling import check_and_validate
+
 
 # TODO need guage location and elevation data
 mcalpine_upper = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=obs&data%5B%5D=xml"
@@ -112,14 +114,13 @@ def Main():
         time_now_string = UTC_NOW_STRING()
         raw_data, guage_id, friendly_name = get_NWS_web_data(point, cache=True)
         # TODO verify webscraping success
-        # TODO store raw_data for ability to work on dates problem over the newyear transition.
+        # DONE, store raw_data for ability to work on dates problem over the newyear transition.
         # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
         # NOTE: cache=True above is used to make a local copy in the CWD of the original HTML scrape.
         data_list = sort_and_label_data(raw_data, guage_id, friendly_name)
         # TODO verify successful conversion of data
         for item in data_list:
             print(item)
-            # TODO place item in csv file
             output_directory = create_timestamp_subdirectory_Structure(time_now_string)
             OD = f"{OUTPUT_ROOT}{output_directory}"
             FN = f"{time_now_string}"
@@ -132,6 +133,7 @@ def Main():
 while True:
     Main()
     print('Sleeping...')
-    for s in range(60*60*24):
+    total_sleep = 60*60*24
+    for s in range(total_sleep):
         sleep(1)
-        print(".", end="", flush=True)
+        print(f" {total_sleep - s}         \r", end="", flush=True)
