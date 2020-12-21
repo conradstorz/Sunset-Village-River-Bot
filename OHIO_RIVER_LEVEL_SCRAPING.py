@@ -133,7 +133,7 @@ def Main():
 while True:
     Main()
     print('Sleeping...')
-    total_sleep = 60*60*24
+    total_sleep = 60*60*6
     for s in range(total_sleep):
         sleep(1)
-        print(f" {total_sleep - s}         \r", end="", flush=True)
+        print(f"\r {total_sleep - s}         ", end="", flush=True)
