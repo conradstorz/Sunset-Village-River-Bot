@@ -65,13 +65,13 @@ def save_html_text(txt):
     """
     # create file path
     filename = f'{UTC_NOW_STRING()}_webscrape.rawhtml'
-    dirobj = Path(Path.cwd())
-    dirobj.mkdir(parents=True, exist_ok=True)    
+    # use a subdirectory of current working directory
+    dirobj = Path(Path.cwd(), 'raw_web_scrapes')
+    dirobj.mkdir(parents=True, exist_ok=True)   
+    # ensure that filename only contains valid characters 
     pathobj = check_and_validate(filename, dirobj)
-
     with open(pathobj, "w") as txtfile:
         txtfile.write(str(txt))
-    
     return None
 
 
