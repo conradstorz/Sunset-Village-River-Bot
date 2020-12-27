@@ -59,7 +59,7 @@ def log_error(e):
 
 
 def save_html_text(txt):
-    """Place 'txt' in a file in the current working directory 
+    """Place 'txt' in a subdirectory in the current working directory 
     under a filename based on the current time.
     This will be useful for additional review of accuracy in data extraction.
     """
