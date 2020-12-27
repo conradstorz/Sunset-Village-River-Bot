@@ -11,8 +11,9 @@ If tweeting reports rising water then additional runs of scraping routine can be
 """
 
 # import custom modules
+from loguru import logger
 from data2csv import write_csv
-from time_strings import UTC_NOW_STRING
+from time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
 from WebScraping import retrieve_cleaned_html
 from filehandling import create_timestamp_subdirectory_Structure
 
@@ -35,20 +36,30 @@ POINTS_OF_INTEREST = [mcalpine_upper, mrklnd_lower, clifty_creek, lsvl_watertowe
 
 OUTPUT_ROOT = "CSV_DATA/"
 
+@logger.catch
+def pull_details(soup):
+    """return specific parts of the scrape.
 
+    Args:
+        soup (bs4.BeautifulSoup): NWS guage scrape
+    """
+    guage_id = soup.h1["id"]
+    guage_string = soup.h1.string
+    nws_class = soup.find(class_="obs_fores")
+    nws_obsfores_contents = nws_class.contents
+    return (nws_obsfores_contents, guage_id, guage_string)   
+
+@logger.catch
 def get_NWS_web_data(site, cache=False):
     """Return a BeautifulSoup (BS4) object from the Nation Weater Service (NWS)
     along with the ID# and TEXT describing the guage data.
     If CACHE then place the cleaned HTML into local storage for later processing by other code.
     """
     clean_soup = retrieve_cleaned_html(site, cache)
-    guage_id = clean_soup.h1["id"]
-    guage_string = clean_soup.h1.string
-    nws_class = clean_soup.find(class_="obs_fores")
-    nws_obsfores_contents = nws_class.contents
-    return (nws_obsfores_contents, guage_id, guage_string)
+    content, id, name = pull_details(clean_soup)
+    return (content, id, name)
 
-
+@logger.catch
 def FixDate(s, currentyear, time_zone="UTC"):
     """Split date from time timestamp provided by NWS and add timezone label as well as correct year.
     Unfortunately, NWS chose not to include the year in their observation/forecast data.
@@ -56,18 +67,24 @@ def FixDate(s, currentyear, time_zone="UTC"):
     If Observation dates are in December, Forecast dates must be checked and fixed for roll over into next year.
     # NOTE: forecast dates will appear to be in the past as compared to the scrapping date if they are actually supposed to be next year.
     """
-    # TODO get the NOW datetime so we can identify dates that rollover into next year.
-    # QUESTION: what problems do past observations cause when new year arrives? 
-    # QUESTION: Do I need to know if this date represents an OBSERVATION so I can corectly apply the year to it?
+    if len(currentyear) != 4 or not(currentyear.isdigit()):
+        raise TypeError('Year Must be four digits.')
+
+    # TODO make more robust string spliting
     date_string, time_string = s.split()
+
     month_digits, day_digits = date_string.split("/")
-    # TODO Add sanity check for 'currentyear' to ensure that it is a string representing 4 digits
+    if len(month_digits)+len(day_digits) != 4:
+        raise AssertionError('Month or Day string not correctly extracted.')
+
+    # corrected_year = apply_logical_year_value_to_monthday_pair(f'{yyyy}{mm}{dd}')
+
     fixed = f"{currentyear}-{month_digits}-{day_digits}_{time_string}{time_zone}"
     # TODO create a datetime object from 'fixed' for use in determining future/past events
     # TODO consider returning a datetime object and not a string.
     return fixed
 
-
+@logger.catch
 def sort_and_label_data(web_data, guage_id, guage_string):
     readings = []
     labels = ["datetime", "level", "flow"]
@@ -92,12 +109,12 @@ def sort_and_label_data(web_data, guage_id, guage_string):
                     row_dict = {"guage": guage_id, "type": sect_name}
     return readings
 
-
+@logger.catch
 def compact_datestring(ds):
     """Return a string representing datetime of provided tuple."""
     return f"{ds[0]}{ds[1]}{ds[2]}_{ds[3]}{ds[4]}"
 
-
+@logger.catch
 def expand_datestring(ds):
     """Return elements of provided datestring."""
     x = ds.split("_")
@@ -108,7 +125,7 @@ def expand_datestring(ds):
     z = x[1][-3:]
     return (m, d, y, t, z)
 
-
+@logger.catch
 def Main():
     for point in POINTS_OF_INTEREST:
         time_now_string = UTC_NOW_STRING()
@@ -130,10 +147,51 @@ def Main():
         print(time_now_string)
     return True
 
-while True:
-    Main()
-    print('Sleeping...')
-    total_sleep = 60*60*6
-    for s in range(total_sleep):
-        sleep(1)
-        print(f"\r {total_sleep - s}         ", end="", flush=True)
+@logger.catch
+def display_cached_data(number_of_scrapes):
+    """process html collected previously and output to console.
+
+    Args:
+        number_of_scrapes (int) : number of scrapes to process from newest towards oldest
+    """
+    from pathlib import Path
+    from bs4 import BeautifulSoup
+    root = Path(Path.cwd(), 'raw_web_scrapes')
+    files = list(root.glob('*.rawhtml')) # returns files ending with '.rawhtml'
+    # sort the list oldest to newest
+    files.sort(key=lambda fn: fn.stat().st_mtime, reverse=True)
+    # recover the scrapes
+    sample = []
+    for i in range(number_of_scrapes):
+        sample.append(files[i])
+
+    data_sample = []
+    for fl in sample:
+        data_list = []
+        with open(fl, "r") as txtfile:
+            raw_html = txtfile.read()
+        soup = BeautifulSoup(raw_html, "html.parser")
+        raw_data, guage_id, friendly_name = pull_details(soup)
+        data_list = sort_and_label_data(raw_data, guage_id, friendly_name)
+        data_list = data_list[::-1]
+        for i in range(9):
+            data_sample.append(data_list[i])
+
+    for point in data_sample:
+        datestamp = point['datetime']
+        scrape_year = datestamp[:4]
+        _dummy = apply_logical_year_value_to_monthday_pair(datestamp[:10], scrape_year)
+
+    # scrapetime = from filename
+    return
+
+
+
+if __name__ == "__main__":
+    while True:
+        Main()
+        print('Sleeping...')
+        total_sleep = 60*60*6
+        for s in range(total_sleep):
+            sleep(1)
+            print(f"\r {total_sleep - s}         ", end="", flush=True)
