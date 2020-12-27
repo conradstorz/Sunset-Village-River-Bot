@@ -5,7 +5,7 @@
 """
 
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from time import sleep
 import pytz
 from loguru import logger
@@ -60,3 +60,134 @@ if __name__ == "__main__":
         sleep(2)
         print()
 
+
+def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
+    """Given a month and day strings apply the rule that it must represent a current day in the near past or future.
+    This problem presents itself when gathering data from the National Weather Service.
+    The site I am scraping for the readings of river water level values does only include the month/day not year.
+    These datapoints are historical going back only approximately 30 days and forecast only 7 days future.
+    At the end of a year and the first month of the year they are problematic.
+
+    Args:
+        datestring (str): 'any parseable string representing a date'
+        scrape_year (str): Four digits long string
+
+    Returns:
+        datetime.object: as a best fit date given we ignore the year provided
+                         in the datestring if there is one and match to the scrape year provided.
+    """
+    supplied_date = (0, 0, 0)
+    scraped_datestamp = (0, 0, 0)
+    from dateutil.parser import parse, ParserError
+    try:
+        supplied_date = parse(datestring)
+        scraped_datestamp = parse(scrape_year)
+    except ParserError as e:
+        print(f'{e}: Could not parse datestring provided.')
+
+    scraped_datestamp = scraped_datestamp.replace(tzinfo=pytz.UTC)
+
+    # expceted result: type datetime(yyyy, mm, dd, hh, min, sec) object
+    yyyy = supplied_date.strftime("%Y")
+    mnth = supplied_date.strftime("%m")
+    dy = supplied_date.strftime("%d")
+
+    if len(yyyy)+len(mnth)+len(dy) != 8 or not(f'{yyyy}{mnth}{dy}'.isdigit()):
+        print(f'Parsed date returned y={yyyy} m={mnth} d={dy}')
+        raise AttributeError('Argument must be a parseable datestring.')
+
+    offered_year = int(yyyy)
+    prev_year = offered_year-1
+    next_year = offered_year+1
+    mm = int(mnth)
+    dd = int(dy)
+
+    # Create a UTC timezone in instance
+    UTC_TimeDelta = timedelta(hours=0)
+    tzUTC = timezone(UTC_TimeDelta, name="UTC")
+
+    # create list of possible dates
+    dates = []
+    offered_datestamp = datetime(offered_year,mm,dd,1,0,0,0,tzUTC)
+    dates.append(offered_datestamp)
+    prev_datestamp = datetime(prev_year,mm,dd,1,0,0,0,tzUTC)
+    dates.append(prev_datestamp)
+    next_datestamp = datetime(next_year,mm,dd,1,0,0,0,tzUTC)
+    dates.append(next_datestamp)
+
+    delta_dict = {}
+    delta_dict[abs(dates[0] - scraped_datestamp)] = dates[0]
+    delta_dict[abs(dates[1] - scraped_datestamp)] = dates[1]
+    delta_dict[abs(dates[2] - scraped_datestamp)] = dates[2]
+
+    corrected_datestamp = delta_dict[sorted(delta_dict.keys())[0]]
+
+    print(f'Offered:{offered_datestamp}, Corrected:{corrected_datestamp}')    
+
+    return corrected_datestamp
+
+
+
+
+# Notes:
+"""
+# working with datetime objects:
+
+#    It is allowed to subtract one datetime object from another datetime object
+#    The resultant object from subtraction of two datetime objects is an object of type timedelta
+
+import datetime
+
+d1 = datetime.datetime.now()
+d2 = datetime.datetime.now()
+x  = d2-d1
+print(type(x))
+print(x)
+ 
+    Output:
+        <class 'datetime.timedelta'>
+        0:00:00.000008
+
+#    The subtraction operation of two datetime objects succeeds, if both the objects are naive objects, 
+#    or both the objects are aware objects. i.e., Both the objects have their tzinfo as None
+#    If one datetime object is a naive object and another datetime object is an aware object 
+#    then  python raises an exception of type TypeError stating:
+#       TypeError: can't subtract offset-naive and offset-aware datetimes.
+
+import datetime
+# Time difference for pacific time
+pacificTimeDelta    = datetime.timedelta(hours=-8)
+
+# Create a PST timezone in instance
+tzPST        = datetime.timezone(pacificTimeDelta, name="PST")
+
+# create a datetime for 1 PM PST - 31Dec2017 - An aware Object
+OnePMyearEndPST = datetime.datetime(2017,12,31,1,0,0,0,tzPST)
+
+# create a dateobject for current time - without any timezone attached - A naive object
+todaysDate = datetime.datetime.now()
+
+# Try subtracting the naive object from the aware object
+    # This will raise a Type Error
+todaysDate = OnePMyearEndPST - todaysDate
+    TypeError: can't subtract offset-naive and offset-aware datetimes
+
+# Time difference for EST time
+nycTimeDelta    = datetime.timedelta(hours=-8)
+
+# Create a PST timezone in instance
+tzEST           = datetime.timezone(nycTimeDelta, name="EST")
+
+# create a datetime for 1 PM PST - 31Dec2017 - An aware Object
+TwoPMyearEndEST = datetime.datetime(2017,12,31,2,0,0,0,tzEST)
+
+# If both the datetime objects are aware objects and each object is having a different time zone information 
+#   – then both the time quantity of the objects are converted into UTC first 
+#       and the subtraction is applied on the two UTC time quantities.
+print(TwoPMyearEndEST-OnePMyearEndPST)
+    Output:
+        1:00:00
+
+
+
+"""
