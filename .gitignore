@@ -3,9 +3,11 @@
 
 # data scrape files
 CSV_DATA
+raw_web_scrapes
 
 # zipped logs
 *.log.zip
+LOGS
 
 # vscode.settings.json
 .vscode/

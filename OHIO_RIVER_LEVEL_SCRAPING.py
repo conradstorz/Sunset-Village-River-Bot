@@ -177,7 +177,7 @@ def display_cached_data(number_of_scrapes):
         for i in range(9):
             data_sample.append(data_list[i])
 
-    for point in data_sample:
+    for point in data_sample[::-1]:
         datestamp = point['datetime']
         scrape_year = datestamp[:4]
         _dummy = apply_logical_year_value_to_monthday_pair(datestamp[:10], scrape_year)
