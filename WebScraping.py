@@ -21,18 +21,19 @@ def simple_get(url):
     """
     Attempts to get the content at `url` by making an HTTP GET request.
     If the content-type of response is some kind of HTML/XML, return the
-    text content, otherwise return None.
+    text content, otherwise raise exception if bad response or RequestException
     """
     try:
         with closing(get(url, stream=True)) as resp:
             if is_good_response(resp):
                 return resp.content
             else:
-                return None
+                raise Warning(f'Bad response from: {url}')
 
     except RequestException as e:
-        log_error("Error during requests to {0} : {1}".format(url, str(e)))
-        return None
+        log_error(f"Error during requests to {url} : {str(e)}")
+        raise Warning(f'{str(e)}')
+
 
 
 @logger.catch
