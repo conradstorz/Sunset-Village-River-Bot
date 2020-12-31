@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
 
 def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
-    """Given a month and day strings apply the rule that it must represent a current day in the near past or future.
+    """Given a month and day apply the rule that it must represent a day in the near past or future.
     This problem presents itself when gathering data from the National Weather Service.
     The site I am scraping for the readings of river water level values does only include the month/day not year.
     These datapoints are historical going back only approximately 30 days and forecast only 7 days future.
@@ -73,8 +73,7 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
         scrape_year (str): Four digits long string
 
     Returns:
-        datetime.object: as a best fit date given we ignore the year provided
-                         in the datestring if there is one and match to the scrape year provided.
+        datetime.object: fully qualified date with the corrected year.
     """
     supplied_date = (0, 0, 0)
     scraped_datestamp = (0, 0, 0)
@@ -85,6 +84,7 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
     except ParserError as e:
         print(f'{e}: Could not parse datestring provided.')
 
+    # All work is done with timezone aware objects.
     scraped_datestamp = scraped_datestamp.replace(tzinfo=pytz.UTC)
 
     # expceted result: type datetime(yyyy, mm, dd, hh, min, sec) object
@@ -102,7 +102,7 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
     mm = int(mnth)
     dd = int(dy)
 
-    # Create a UTC timezone in instance
+    # Create a UTC timezone instance
     UTC_TimeDelta = timedelta(hours=0)
     tzUTC = timezone(UTC_TimeDelta, name="UTC")
 
@@ -115,14 +115,16 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
     next_datestamp = datetime(next_year,mm,dd,1,0,0,0,tzUTC)
     dates.append(next_datestamp)
 
+    # Create a dict of dates keyed on the number of days elapsed.
     delta_dict = {}
     delta_dict[abs(dates[0] - scraped_datestamp)] = dates[0]
     delta_dict[abs(dates[1] - scraped_datestamp)] = dates[1]
     delta_dict[abs(dates[2] - scraped_datestamp)] = dates[2]
 
+    # Sort and return only the date nearest in time to year specified.
     corrected_datestamp = delta_dict[sorted(delta_dict.keys())[0]]
 
-    print(f'Offered:{offered_datestamp}, Corrected:{corrected_datestamp}')    
+    print(f'Offered:{datestring}, Corrected:{corrected_datestamp}')    
 
     return corrected_datestamp
 
