@@ -13,7 +13,7 @@ If tweeting reports rising water then additional runs of scraping routine can be
 # import custom modules
 from loguru import logger
 from data2csv import write_csv
-from time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
+from time_strings import LOCAL_TODAY, UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
 from WebScraping import retrieve_cleaned_html
 from filehandling import create_timestamp_subdirectory_Structure
 
@@ -87,6 +87,7 @@ def FixDate(s, currentyear, time_zone="UTC"):
 @logger.catch
 def sort_and_label_data(web_data, guage_id, guage_string):
     readings = []
+    yyyy = LOCAL_TODAY().strftime("%Y")
     labels = ["datetime", "level", "flow"]
     for i, item in enumerate(web_data):
         if i >= 1:  # zeroth item is an empty list
@@ -101,7 +102,7 @@ def sort_and_label_data(web_data, guage_id, guage_string):
                 element = data.contents[0]
                 pointer = i % 3  # each reading contains 3 unique data points
                 if pointer == 0:  # this is the element for date/time
-                    element = FixDate(element, "2020") # NOTE: Future code might return a datetime object.
+                    element = FixDate(element, yyyy) # NOTE: Future code might return a datetime object.
                 row_dict[labels[pointer]] = element # TODO Add sanity check for this value being a string not an object.
                 if pointer == 2:  # end of this reading
                     readings.append(row_dict)  # add to the compilation
