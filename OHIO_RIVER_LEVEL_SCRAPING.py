@@ -13,7 +13,7 @@ If tweeting reports rising water then additional runs of scraping routine can be
 # import custom modules
 from loguru import logger
 from data2csv import write_csv
-from time_strings import LOCAL_TODAY, UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
+from time_strings import LOCAL_TODAY, UTC_NOW, UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
 from WebScraping import retrieve_cleaned_html
 from filehandling import create_timestamp_subdirectory_Structure
 
@@ -87,7 +87,8 @@ def FixDate(s, currentyear, time_zone="UTC"):
 @logger.catch
 def sort_and_label_data(web_data, guage_id, guage_string):
     readings = []
-    yyyy = LOCAL_TODAY().strftime("%Y")
+    # Retrieve todays year so that we can supply it to the processing of the date codes.
+    yyyy = UTC_NOW().strftime("%Y") # NWS website operates on UTC
     labels = ["datetime", "level", "flow"]
     for i, item in enumerate(web_data):
         if i >= 1:  # zeroth item is an empty list
