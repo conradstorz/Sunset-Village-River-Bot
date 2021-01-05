@@ -195,4 +195,56 @@ print(TwoPMyearEndEST-OnePMyearEndPST)
 
 
 
+
+
+
+
+Dateparser Search
+Search for Dates in Longer Chunks of Text
+
+Warning
+
+Support for searching dates is really limited and needs a lot of improvement, we look forward to community’s contribution to get better on that part. See “Contributing”.
+
+You can extract dates from longer strings of text. They are returned as list of tuples with text chunk containing the date and parsed datetime object.
+
+dateparser.search.search_dates(text, languages=None, settings=None, add_detected_language=False)[source]
+
+    Find all substrings of the given string which represent date and/or time and parse them.
+    Parameters:	
+
+        text (str) – A string in a natural language which may contain date and/or time expressions.
+        languages (list) – A list of two letters language codes.e.g. [‘en’, ‘es’]. If languages are given, it will not attempt to detect the language.
+        settings (dict) – Configure customized behavior using settings defined in dateparser.conf.Settings.
+        add_detected_language (bool) – Indicates if we want the detected language returned in the tuple.
+
+    Returns:	
+
+    Returns list of tuples containing: substrings representing date and/or time, corresponding datetime.datetime object and detected language if add_detected_language is True. Returns None if no dates that can be parsed are found.
+    Return type:	
+
+    list
+    Raises:	
+
+    ValueError - Unknown Language
+
+    >>> from dateparser.search import search_dates
+    >>> search_dates('The first artificial Earth satellite was launched on 4 October 1957.')
+    [('on 4 October 1957', datetime.datetime(1957, 10, 4, 0, 0))]
+
+    >>> search_dates('The first artificial Earth satellite was launched on 4 October 1957.',
+    >>>              add_detected_language=True)
+    [('on 4 October 1957', datetime.datetime(1957, 10, 4, 0, 0), 'en')]
+
+    >>> search_dates("The client arrived to the office for the first time in March 3rd, 2004 "
+    >>>              "and got serviced, after a couple of months, on May 6th 2004, the customer "
+    >>>              "returned indicating a defect on the part")
+    [('in March 3rd, 2004 and', datetime.datetime(2004, 3, 3, 0, 0)),
+     ('on May 6th 2004', datetime.datetime(2004, 5, 6, 0, 0))]
+
+Advanced Usage
+
+If you need more control over what is being parser check the Settings section as well as the Using DateDataParser section.
+
+
 """
