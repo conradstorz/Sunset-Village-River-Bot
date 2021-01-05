@@ -14,6 +14,7 @@ If tweeting reports rising water then additional runs of scraping routine can be
 from pathlib import Path
 from bs4 import BeautifulSoup, Comment
 import datetime
+import pytz
 from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
@@ -120,7 +121,7 @@ def FixDate(s, scrape_date, time_zone="UTC"):
     # now place the timestamp back into the date object.
     corrected_datetime = datetime.datetime.combine(corrected_year, timestamp)
 
-    return corrected_datetime
+    return corrected_datetime.replace(tzinfo=pytz.UTC)
 
 
 @logger.catch
