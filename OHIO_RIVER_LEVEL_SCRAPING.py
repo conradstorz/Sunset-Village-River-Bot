@@ -11,9 +11,14 @@ If tweeting reports rising water then additional runs of scraping routine can be
 """
 
 # import custom modules
+from pathlib import Path
+from bs4 import BeautifulSoup, Comment
+import datetime
+from dateutil.parser import parse, ParserError
+from dateparser.search import search_dates
 from loguru import logger
 from data2csv import write_csv
-from time_strings import LOCAL_TODAY, UTC_NOW, UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair
+from time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring
 from WebScraping import retrieve_cleaned_html
 from filehandling import create_timestamp_subdirectory_Structure
 
@@ -36,6 +41,34 @@ POINTS_OF_INTEREST = [mcalpine_upper, mrklnd_lower, clifty_creek, lsvl_watertowe
 
 OUTPUT_ROOT = "CSV_DATA/"
 
+
+@logger.catch
+def extract_date(text_list):
+    """Searches a text string for a date reference and returns a datetime object.
+
+    Args:
+        text_list (list): A list of any length of strings of any length.
+
+    Raises:
+        TypeError: Input must be string
+        ParseError: No decipherable date found.
+
+    Returns:
+        datetime.datetime: Datetime Object
+    """
+    if type(text_list) != list:
+        raise TypeError('Argument must be a list.')
+
+    for t in text_list:
+        found = search_dates(t)
+        if found != None:
+            for itm in found:
+                s, d = itm
+                if len(s) == 8 and s[2] == ':' == s[5]:
+                    return d
+    raise ParserError('No parseable date found.')
+
+
 @logger.catch
 def pull_details(soup):
     """return specific parts of the scrape.
@@ -45,9 +78,16 @@ def pull_details(soup):
     """
     guage_id = soup.h1["id"]
     guage_string = soup.h1.string
+    # find the comments.
+    comments = soup.findAll(text=lambda text:isinstance(text, Comment))
+    # convert the findAll.ResultSet into a plain list.
+    c_list = [c for c in comments]
+    # Search the comments for a date (the NWS webscrape contains exactly 1 date/timestamp).
+    scrape_date = extract_date(c_list)
+    print(f'Scrape date: {scrape_date}')
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
-    return (nws_obsfores_contents, guage_id, guage_string)   
+    return (nws_obsfores_contents, guage_id, guage_string, scrape_date)   
 
 @logger.catch
 def get_NWS_web_data(site, cache=False):
@@ -56,39 +96,41 @@ def get_NWS_web_data(site, cache=False):
     If CACHE then place the cleaned HTML into local storage for later processing by other code.
     """
     clean_soup = retrieve_cleaned_html(site, cache)
-    content, id, name = pull_details(clean_soup)
-    return (content, id, name)
+    content, id, name, date = pull_details(clean_soup)
+    return (content, id, name, date)
 
 @logger.catch
-def FixDate(s, currentyear, time_zone="UTC"):
+def FixDate(s, scrape_date, time_zone="UTC"):
     """Split date from time timestamp provided by NWS and add timezone label as well as correct year.
     Unfortunately, NWS chose not to include the year in their observation/forecast data.
     This will be problematic when forecast dates are into the next year.
     If Observation dates are in December, Forecast dates must be checked and fixed for roll over into next year.
     # NOTE: forecast dates will appear to be in the past as compared to the scrapping date if they are actually supposed to be next year.
     """
-    if len(currentyear) != 4 or not(currentyear.isdigit()):
-        raise TypeError('Year Must be four digits.')
-
     # TODO make more robust string spliting
     date_string, time_string = s.split()
-
+    hours, minutes = time_string.split(":")
+    timestamp = datetime.time(int(hours), int(minutes))
     month_digits, day_digits = date_string.split("/")
     if len(month_digits)+len(day_digits) != 4:
         raise AssertionError('Month or Day string not correctly extracted.')
 
-    # corrected_year = apply_logical_year_value_to_monthday_pair(f'{yyyy}{mm}{dd}')
+    corrected_year = apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
+    
+    # now place the timestamp back into the date object.
+    corrected_datetime = datetime.datetime.combine(corrected_year, timestamp)
 
-    fixed = f"{currentyear}-{month_digits}-{day_digits}_{time_string}{time_zone}"
-    # TODO create a datetime object from 'fixed' for use in determining future/past events
-    # TODO consider returning a datetime object and not a string.
-    return fixed
+    return corrected_datetime
+
 
 @logger.catch
-def sort_and_label_data(web_data, guage_id, guage_string):
+def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
+    # TODO retrieve date of scrape from inside web_data.
+    # The date of the webscrape is only included in one place inside
+    # the original scrape.
     readings = []
-    # Retrieve todays year so that we can supply it to the processing of the date codes.
-    yyyy = UTC_NOW().strftime("%Y") # NWS website operates on UTC
+    # Retrieve scrape year so that we can supply it to the processing of the date codes.
+    yyyy = scrape_date.strftime("%Y") # NWS website operates on UTC
     labels = ["datetime", "level", "flow"]
     for i, item in enumerate(web_data):
         if i >= 1:  # zeroth item is an empty list
@@ -103,7 +145,8 @@ def sort_and_label_data(web_data, guage_id, guage_string):
                 element = data.contents[0]
                 pointer = i % 3  # each reading contains 3 unique data points
                 if pointer == 0:  # this is the element for date/time
-                    element = FixDate(element, yyyy) # NOTE: Future code might return a datetime object.
+                    date = FixDate(element, scrape_date)
+                    element = timefstring(date)
                 row_dict[labels[pointer]] = element # TODO Add sanity check for this value being a string not an object.
                 if pointer == 2:  # end of this reading
                     readings.append(row_dict)  # add to the compilation
@@ -131,12 +174,12 @@ def expand_datestring(ds):
 def Main():
     for point in POINTS_OF_INTEREST:
         time_now_string = UTC_NOW_STRING()
-        raw_data, guage_id, friendly_name = get_NWS_web_data(point, cache=True)
+        raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
         # TODO verify webscraping success
         # DONE, store raw_data for ability to work on dates problem over the newyear transition.
         # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
         # NOTE: cache=True above is used to make a local copy in the CWD of the original HTML scrape.
-        data_list = sort_and_label_data(raw_data, guage_id, friendly_name)
+        data_list = sort_and_label_data(raw_data, guage_id, friendly_name, scrape_date)
         # TODO verify successful conversion of data
         for item in data_list:
             print(item)
@@ -156,8 +199,6 @@ def display_cached_data(number_of_scrapes):
     Args:
         number_of_scrapes (int) : number of scrapes to process from newest towards oldest
     """
-    from pathlib import Path
-    from bs4 import BeautifulSoup
     root = Path(Path.cwd(), 'raw_web_scrapes')
     files = list(root.glob('*.rawhtml')) # returns files ending with '.rawhtml'
     # sort the list oldest to newest
@@ -173,17 +214,21 @@ def display_cached_data(number_of_scrapes):
         with open(fl, "r") as txtfile:
             raw_html = txtfile.read()
         soup = BeautifulSoup(raw_html, "html.parser")
-        raw_data, guage_id, friendly_name = pull_details(soup)
-        data_list = sort_and_label_data(raw_data, guage_id, friendly_name)
+        raw_data, guage_id, friendly_name, scrape_date = pull_details(soup)
+        data_list = sort_and_label_data(raw_data, guage_id, friendly_name, scrape_date)
         data_list = data_list[::-1]
         for i in range(9):
             data_sample.append(data_list[i])
 
     for point in data_sample[::-1]:
         datestamp = point['datetime']
-        scrape_year = datestamp[:4]
-        _dummy = apply_logical_year_value_to_monthday_pair(datestamp[:10], scrape_year)
+        if type(datestamp) == str:
+            full_date = datestamp[:10]
+        else:
+            full_date = datestamp.strftime("%Y/%m/%d")
 
+        _dummy = apply_logical_year_value_to_monthday_pair(full_date, scrape_date)
+        print(f'Correct observation date: {_dummy}, original full date: {full_date}')
     # scrapetime = from filename
     return
 

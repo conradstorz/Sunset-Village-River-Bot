@@ -61,7 +61,7 @@ if __name__ == "__main__":
         print()
 
 
-def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
+def apply_logical_year_value_to_monthday_pair(datestring, scrape_datestamp):
     """Given a month and day apply the rule that it must represent a day in the near past or future.
     This problem presents itself when gathering data from the National Weather Service.
     The site I am scraping for the readings of river water level values does only include the month/day not year.
@@ -69,38 +69,38 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
     At the end of a year and the first month of the year they are problematic.
 
     Args:
-        datestring (str): 'any parseable string representing a date'
-        scrape_year (str): Four digits long string
+        datestring (str): 'any parseable string representing a month and day'
+        scrape_datestamp (datetime.datetime):  actual date of web scrape.
 
     Returns:
         datetime.object: fully qualified date with the corrected year.
     """
-    supplied_date = (0, 0, 0)
-    scraped_datestamp = (0, 0, 0)
     from dateutil.parser import parse, ParserError
     try:
         supplied_date = parse(datestring)
-        scraped_datestamp = parse(scrape_year)
     except ParserError as e:
         print(f'{e}: Could not parse datestring provided.')
+        raise ParserError(e)
 
     # All work is done with timezone aware objects.
-    scraped_datestamp = scraped_datestamp.replace(tzinfo=pytz.UTC)
+    supplied_date = supplied_date.replace(tzinfo=pytz.UTC)
+    scrape_datestamp = scrape_datestamp.replace(tzinfo=pytz.UTC)
 
     # expceted result: type datetime(yyyy, mm, dd, hh, min, sec) object
-    yyyy = supplied_date.strftime("%Y")
-    mnth = supplied_date.strftime("%m")
-    dy = supplied_date.strftime("%d")
+    sc_yyyy = scrape_datestamp.strftime("%Y")
+    su_mnth = supplied_date.strftime("%m")
+    su_dy = supplied_date.strftime("%d")
 
-    if len(yyyy)+len(mnth)+len(dy) != 8 or not(f'{yyyy}{mnth}{dy}'.isdigit()):
-        print(f'Parsed date returned y={yyyy} m={mnth} d={dy}')
+    if len(sc_yyyy)+len(su_mnth)+len(su_dy) != 8 or not(f'{sc_yyyy}{su_mnth}{su_dy}'.isdigit()):
+        print(f'Parsed date returned y={sc_yyyy} m={su_mnth} d={su_dy}')
         raise AttributeError('Argument must be a parseable datestring.')
 
-    offered_year = int(yyyy)
+    offered_year = int(sc_yyyy)
     prev_year = offered_year-1
     next_year = offered_year+1
-    mm = int(mnth)
-    dd = int(dy)
+
+    mm = int(su_mnth)
+    dd = int(su_dy)
 
     # Create a UTC timezone instance
     UTC_TimeDelta = timedelta(hours=0)
@@ -117,14 +117,17 @@ def apply_logical_year_value_to_monthday_pair(datestring, scrape_year):
 
     # Create a dict of dates keyed on the number of days elapsed.
     delta_dict = {}
-    delta_dict[abs(dates[0] - scraped_datestamp)] = dates[0]
-    delta_dict[abs(dates[1] - scraped_datestamp)] = dates[1]
-    delta_dict[abs(dates[2] - scraped_datestamp)] = dates[2]
+    for _i, date in enumerate(dates):
+        delta = scrape_datestamp - date
+        # print(f'{scrape_datestamp} scrape, {date} date')
+        delta_dict[abs(delta.days)] = date
 
     # Sort and return only the date nearest in time to year specified.
-    corrected_datestamp = delta_dict[sorted(delta_dict.keys())[0]]
+    keys = sorted(delta_dict.keys())
+    corrected_datestamp = delta_dict[keys[0]]
 
-    print(f'Offered:{datestring}, Corrected:{corrected_datestamp}')    
+    # print(f'Offered:{datestring} and scrape year {scrape_datestamp}, Corrected:{corrected_datestamp}')    
+    # print(f'{delta_dict}')
 
     return corrected_datestamp
 
