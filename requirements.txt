@@ -10,7 +10,7 @@ Flask==1.1.1
 future==0.18.2
 itsdangerous==1.1.0
 loguru==0.3.0
-lxml==4.3.4
+lxml==4.6.2
 pep8==1.7.1
 pupdb==0.1.4
 pyflakes==2.1.1
