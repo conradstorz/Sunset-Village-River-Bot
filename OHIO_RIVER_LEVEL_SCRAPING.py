@@ -9,6 +9,8 @@ This program should be run daily (by cron for example).
 A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
+# import standard library modules
+from time import sleep
 
 # import custom modules
 from pathlib import Path
@@ -19,14 +21,11 @@ from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
 
-# this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities
+# this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities.
 from utils.data2csv import write_csv
 from utils.time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring
 from utils.WebScraping import retrieve_cleaned_html
 from utils.filehandling import create_timestamp_subdirectory_Structure
-
-# import standard library modules
-from time import sleep
 
 
 # TODO need guage location and elevation data
