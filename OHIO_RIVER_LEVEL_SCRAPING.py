@@ -18,10 +18,12 @@ import pytz
 from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
-from data2csv import write_csv
-from time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring
-from WebScraping import retrieve_cleaned_html
-from filehandling import create_timestamp_subdirectory_Structure
+
+# this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities
+from utils.data2csv import write_csv
+from utils.time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring
+from utils.WebScraping import retrieve_cleaned_html
+from utils.filehandling import create_timestamp_subdirectory_Structure
 
 # import standard library modules
 from time import sleep
