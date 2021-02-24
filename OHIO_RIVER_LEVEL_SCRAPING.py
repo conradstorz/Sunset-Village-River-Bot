@@ -23,7 +23,7 @@ from loguru import logger
 
 # this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities.
 from utils.data2csv import write_csv
-from utils.time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring
+from utils.time_strings import UTC_NOW_STRING, apply_logical_year_value_to_monthday_pair, timefstring, UTC_NOW
 from utils.WebScraping import retrieve_cleaned_html
 from utils.filehandling import create_timestamp_subdirectory_Structure
 
@@ -85,7 +85,11 @@ def pull_details(soup):
     # convert the findAll.ResultSet into a plain list.
     c_list = [c for c in comments]
     # Search the comments for a date (the NWS webscrape contains exactly 1 date/timestamp).
-    scrape_date = extract_date(c_list)
+    try:
+        scrape_date = extract_date(c_list)
+    except ParserError as e:
+        logger.error(f'Could not determine date of scrape from within html text. \nError: {e}')
+        scrape_date = UTC_NOW
     print(f'Scrape date: {scrape_date}')
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
