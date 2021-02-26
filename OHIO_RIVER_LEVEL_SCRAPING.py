@@ -10,7 +10,6 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 # import standard library modules
-from copy import Error
 from logging import error
 from time import sleep
 
@@ -20,7 +19,6 @@ from bs4 import BeautifulSoup, Comment
 import datetime
 import pytz
 from tqdm import tqdm
-# from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
 # Logging Setup
@@ -34,7 +32,6 @@ logger.add(
 )  # Unicode instructions needed to avoid file write errors.
 
 # this section imports code from the pypi repository (CFSIV-utils-Conradical) of my own utilities.
-import cfsiv_utils.data2csv as dc
 import cfsiv_utils.WebScraping as ws
 import cfsiv_utils.filehandling as fh
 import cfsiv_utils.time_strings as ts
@@ -291,7 +288,7 @@ def Main():
             output_directory = ts.create_timestamp_subdirectory_Structure(time_now_string)
             OD = f"{OUTPUT_ROOT}{output_directory}"
             FN = f"{time_now_string}"
-            dc.write_csv([item], filename=FN, directory=OD)
+            fh.write_csv([item], filename=FN, directory=OD)
         sleep(1)  # guarnatee next point of interest gets a new timestamp.
         # some scrapes process in under 1 second and result in data collision.
         logger.info(time_now_string)
