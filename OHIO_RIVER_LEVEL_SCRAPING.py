@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup, Comment
 import datetime
 import pytz
 from tqdm import tqdm
-from dateutil.parser import parse, ParserError
+# from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
 # Logging Setup
