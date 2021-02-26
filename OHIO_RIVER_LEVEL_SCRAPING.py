@@ -10,6 +10,8 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 # import standard library modules
+from copy import Error
+from logging import error
 from time import sleep
 
 # import custom modules
@@ -17,20 +19,31 @@ from pathlib import Path
 from bs4 import BeautifulSoup, Comment
 import datetime
 import pytz
+from tqdm import tqdm
 from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
+# Logging Setup
+logger.remove()  # removes the default console logger provided by Loguru.
+# I find it to be too noisy with details more appropriate for file logging.
+# INFO and messages of higher priority only shown on the console.
+logger.add(lambda msg: tqdm.write(msg, end=""), format="{message}", level="ERROR")
+# This creates a logging sink and handler that puts all messages at or above the TRACE level into a logfile for each run.
+logger.add(
+    "./LOGS/file_{time}.log", level="TRACE", encoding="utf8"
+)  # Unicode instructions needed to avoid file write errors.
 
 # this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities.
 from utils.data2csv import write_csv
+from utils.WebScraping import retrieve_cleaned_html
+from utils.filehandling import create_timestamp_subdirectory_Structure
 from utils.time_strings import (
     UTC_NOW_STRING,
     apply_logical_year_value_to_monthday_pair,
     timefstring,
     UTC_NOW,
 )
-from utils.WebScraping import retrieve_cleaned_html
-from utils.filehandling import create_timestamp_subdirectory_Structure
+
 
 RIVER_GUAGE_IDS = [
     141893,
@@ -132,7 +145,7 @@ def extract_date(text_list):
 
     Raises:
         TypeError: Input must be string
-        ParseError: No decipherable date found.
+        dateutil.parser._parser.ParserError: No decipherable date found.
 
     Returns:
         datetime.datetime: Datetime Object
@@ -141,14 +154,17 @@ def extract_date(text_list):
         raise TypeError("Argument must be a list.")
 
     for t in text_list:
+        # TODO try/except?
         found = search_dates(t)
         if found != None:
             for itm in found:
                 s, d = itm
                 if len(s) == 8 and s[2] == ":" == s[5]:
                     return d
-    raise ParserError("No parseable date found.")
-
+    logger.error(f"No parseable date found.\n{text_list}")
+    # NOTE: Wanted to raise an exception here but could not capture it for some reason
+    # with try/except outside of this function.
+    return None
 
 @logger.catch
 def pull_details(soup):
@@ -163,15 +179,13 @@ def pull_details(soup):
     comments = soup.findAll(text=lambda text: isinstance(text, Comment))
     # convert the findAll.ResultSet into a plain list.
     c_list = [c for c in comments]
-    # Search the comments for a date (the NWS webscrape contains exactly 1 date/timestamp).
-    try:
-        scrape_date = extract_date(c_list)
-    except ParserError as e:
-        logger.error(
-            f"Could not determine date of scrape from within html text. \nError: {e}"
-        )
-        scrape_date = UTC_NOW
-    print(f"Scrape date: {scrape_date}")
+    # Search the comments for a date of this scrape.
+    # (the NWS webscrape contains exactly 1 date/timestamp found inside of a comment).
+    scrape_date = extract_date(c_list)
+    if scrape_date == None:
+        logger.error(f"Could not determine date of scrape from within html text.")
+        scrape_date = UTC_NOW() # default value
+    logger.info(f"Scrape date: {scrape_date}")
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
     return (nws_obsfores_contents, guage_id, guage_string, scrape_date)
@@ -268,25 +282,24 @@ def expand_datestring(ds):
 def Main():
     # for point in POINTS_OF_INTEREST:
     for point in USGS_URLS:
+        logger.debug(f'Scraping point: {point}')
         time_now_string = UTC_NOW_STRING()
-        raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(
-            point, cache=True
-        )
+        raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
         # TODO verify webscraping success
         # DONE, store raw_data for ability to work on dates problem over the newyear transition.
         # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
         # NOTE: cache=True above is used to make a local copy in the CWD of the original HTML scrape.
         data_list = sort_and_label_data(raw_data, guage_id, friendly_name, scrape_date)
         # TODO verify successful conversion of data
-        for item in data_list:
-            print(item)
+        for item in tqdm(data_list, desc=friendly_name):
+            logger.debug(item)
             output_directory = create_timestamp_subdirectory_Structure(time_now_string)
             OD = f"{OUTPUT_ROOT}{output_directory}"
             FN = f"{time_now_string}"
             write_csv([item], filename=FN, directory=OD)
         sleep(1)  # guarnatee next point of interest gets a new timestamp.
         # some scrapes process in under 1 second and result in data collision.
-        print(time_now_string)
+        logger.info(time_now_string)
     return True
 
 
@@ -326,7 +339,7 @@ def display_cached_data(number_of_scrapes):
             full_date = datestamp.strftime("%Y/%m/%d")
 
         _dummy = apply_logical_year_value_to_monthday_pair(full_date, scrape_date)
-        print(f"Correct observation date: {_dummy}, original full date: {full_date}")
+        logger.info(f"Correct observation date: {_dummy}, original full date: {full_date}")
     # scrapetime = from filename
     return
 
