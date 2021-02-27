@@ -10,7 +10,6 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 # import standard library modules
-from copy import Error
 from logging import error
 from time import sleep
 
@@ -20,7 +19,6 @@ from bs4 import BeautifulSoup, Comment
 import datetime
 import pytz
 from tqdm import tqdm
-from dateutil.parser import parse, ParserError
 from dateparser.search import search_dates
 from loguru import logger
 # Logging Setup
@@ -33,16 +31,10 @@ logger.add(
     "./LOGS/file_{time}.log", level="TRACE", encoding="utf8"
 )  # Unicode instructions needed to avoid file write errors.
 
-# this section imports code from the pypi repository (CFSIV-utilities-package) of my own utilities.
-from utils.data2csv import write_csv
-from utils.WebScraping import retrieve_cleaned_html
-from utils.filehandling import create_timestamp_subdirectory_Structure
-from utils.time_strings import (
-    UTC_NOW_STRING,
-    apply_logical_year_value_to_monthday_pair,
-    timefstring,
-    UTC_NOW,
-)
+# this section imports code from the pypi repository (CFSIV-utils-Conradical) of my own utilities.
+import cfsiv_utils.WebScraping as ws
+import cfsiv_utils.filehandling as fh
+import cfsiv_utils.time_strings as ts
 
 
 RIVER_GUAGE_IDS = [
@@ -179,7 +171,7 @@ def pull_details(soup):
     scrape_date = extract_date(c_list)
     if scrape_date == None:
         logger.error(f"Could not determine date of scrape from within html text.")
-        scrape_date = UTC_NOW() # default value
+        scrape_date = ts.UTC_NOW() # default value
     logger.info(f"Scrape date: {scrape_date}")
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
@@ -192,7 +184,7 @@ def get_NWS_web_data(site, cache=False):
     along with the ID# and TEXT describing the guage data.
     If CACHE then place the cleaned HTML into local storage for later processing by other code.
     """
-    clean_soup = retrieve_cleaned_html(site, cache)
+    clean_soup = ws.retrieve_cleaned_html(site, cache)
     content, id, name, date = pull_details(clean_soup)
     return (content, id, name, date)
 
@@ -213,7 +205,7 @@ def FixDate(s, scrape_date, time_zone="UTC"):
     if len(month_digits) + len(day_digits) != 4:
         raise AssertionError("Month or Day string not correctly extracted.")
 
-    corrected_year = apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
+    corrected_year = ts.apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
 
     # now place the timestamp back into the date object.
     corrected_datetime = datetime.datetime.combine(corrected_year, timestamp)
@@ -244,7 +236,7 @@ def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
                 pointer = i % 3  # each reading contains 3 unique data points
                 if pointer == 0:  # this is the element for date/time
                     date = FixDate(element, scrape_date)
-                    element = timefstring(date)
+                    element = ts.timefstring(date)
                 row_dict[
                     labels[pointer]
                 ] = element  # TODO Add sanity check for this value being a string not an object.
@@ -278,7 +270,7 @@ def Main():
     # for point in POINTS_OF_INTEREST:
     for point in USGS_URLS:
         logger.debug(f'Scraping point: {point}')
-        time_now_string = UTC_NOW_STRING()
+        time_now_string = ts.UTC_NOW_STRING()
         raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
         # TODO verify webscraping success
         # DONE, store raw_data for ability to work on dates problem over the newyear transition.
@@ -288,10 +280,10 @@ def Main():
         # TODO verify successful conversion of data
         for item in tqdm(data_list, desc=friendly_name):
             logger.debug(item)
-            output_directory = create_timestamp_subdirectory_Structure(time_now_string)
+            output_directory = ts.create_timestamp_subdirectory_Structure(time_now_string)
             OD = f"{OUTPUT_ROOT}{output_directory}"
             FN = f"{time_now_string}"
-            write_csv([item], filename=FN, directory=OD)
+            fh.write_csv([item], filename=FN, directory=OD)
         sleep(1)  # guarnatee next point of interest gets a new timestamp.
         # some scrapes process in under 1 second and result in data collision.
         logger.info(time_now_string)
@@ -333,7 +325,7 @@ def display_cached_data(number_of_scrapes):
         else:
             full_date = datestamp.strftime("%Y/%m/%d")
 
-        _dummy = apply_logical_year_value_to_monthday_pair(full_date, scrape_date)
+        _dummy = ts.apply_logical_year_value_to_monthday_pair(full_date, scrape_date)
         logger.info(f"Correct observation date: {_dummy}, original full date: {full_date}")
     # scrapetime = from filename
     return
