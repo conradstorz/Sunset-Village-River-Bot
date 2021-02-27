@@ -280,11 +280,15 @@ def Main():
         # TODO verify successful conversion of data
         for item in tqdm(data_list, desc=friendly_name):
             logger.debug(item)
-            output_directory = ts.create_timestamp_subdirectory_Structure(time_now_string)
-            OD = f"{OUTPUT_ROOT}{output_directory}"
+
+            date, time = time_now_string.split("_")  # split date from time
+            yy, mm, dd = date.split("-")
+            OP = f"{yy}/{mm}/{dd}/"
+
+            OD = f"{OUTPUT_ROOT}{OP}"
             FN = f"{time_now_string}"
             fh.write_csv([item], filename=FN, directory=OD)
-        sleep(1)  # guarnatee next point of interest gets a new timestamp.
+        sleep(1)  # guarantee next point of interest gets a new timestamp.
         # some scrapes process in under 1 second and result in data collision.
         logger.info(time_now_string)
     return True
