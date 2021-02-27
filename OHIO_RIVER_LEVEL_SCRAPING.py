@@ -98,11 +98,6 @@ RIVER_GUAGE_IDS = [
     153521,
     153530,
     143683,
-    142935,
-    144523,
-    144877,
-    151578,
-    144451,
 ]
 
 USGS_WEBSITE_HEAD_URL = 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]='
