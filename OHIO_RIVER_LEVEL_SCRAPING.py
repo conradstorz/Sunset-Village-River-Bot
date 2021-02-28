@@ -123,35 +123,18 @@ POINTS_OF_INTEREST = [
 OUTPUT_ROOT = "CSV_DATA/"
 
 
+
 @logger.catch
 def extract_date(text_list):
-    """Searches a text string for a date reference and returns a datetime object.
+    date_list = ts.extract_date(text_list)
+    for date in date_list:
+        if date != None:
+            return date
+    logger.debug(f'No parseable date found in: {text_list}')
+    logger.info('No parseable date found.')
+    return ts.UTC_NOW()
 
-    Args:
-        text_list (list): A list of any length of strings of any length.
 
-    Raises:
-        TypeError: Input must be string
-        dateutil.parser._parser.ParserError: No decipherable date found.
-
-    Returns:
-        datetime.datetime: Datetime Object
-    """
-    if type(text_list) != list:
-        raise TypeError("Argument must be a list.")
-
-    for t in text_list:
-        # TODO try/except?
-        found = search_dates(t)
-        if found != None:
-            for itm in found:
-                s, d = itm
-                if len(s) == 8 and s[2] == ":" == s[5]:
-                    return d
-    logger.error(f"No parseable date found.\n{text_list}")
-    # NOTE: Wanted to raise an exception here but could not capture it for some reason
-    # with try/except outside of this function.
-    return None
 
 @logger.catch
 def pull_details(soup):
