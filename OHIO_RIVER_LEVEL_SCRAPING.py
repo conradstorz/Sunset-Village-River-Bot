@@ -131,7 +131,7 @@ def extract_date(text_list):
         if date != None:
             return date
     logger.debug(f'No parseable date found in: {text_list}')
-    logger.info('No parseable date found.')
+    logger.warning('No parseable date found.')
     return ts.UTC_NOW()
 
 
