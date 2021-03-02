@@ -265,6 +265,76 @@ def display_cached_data(number_of_scrapes):
     return
 
 
+import pandas as pd
+@logger.catch
+def display_cached_forecast_data(number_of_scrape_data_events):
+    logger.debug(f'Reviewing {number_of_scrape_data_events} previous webscrapes.')
+    files = fh.get_files(Path(OUTPUT_ROOT), pattern='*') # My files dont all have .csv extensions for some dumb reason
+    # sort the list oldest to newest
+    files.sort(key=lambda fn: fn.stat().st_mtime, reverse=True)
+    # recover the scrapes
+    logger.debug(f'Loaded {len(files)} scrapes.')
+    data_sample = []
+    # logger.debug(files)
+    for fl in files:
+        if fl.is_file():
+            df = pd.read_csv(fl)
+            data_sample.append(df)
+    # logger.debug(data_sample)
+    # extract only forecast data
+    forecasts_data = []
+    for sample_df in data_sample:
+        forecasts = sample_df[sample_df.type == 'Forecast']
+        if len(forecasts.index) > 0:
+            # sort forecasts by highest level to lowest
+            sorted_df = forecasts.sort_values(by=['level'], ascending=False)
+            sorted_df.reset_index(drop=True, inplace=True)
+            # logger.debug(f'\n{sorted_df}')
+            forecasts_data.append(sorted_df)
+    # logger.debug(forecasts_data)
+    # display only highest level and date
+    highest_forecasts = []
+    for sample_df in forecasts_data:
+        highest = sample_df[:1]
+        logger.debug(f'\n{highest[:1]}')
+        highest_forecasts.append(highest)
+    for itm in highest_forecasts:
+        # logger.info(f'\n{itm}')
+        pass
+    return
+
+from datetime import datetime
+@logger.catch
+def display_cached_forecast_data2(number_of_scrape_data_events):
+    custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
+    logger.debug(f'Reviewing {number_of_scrape_data_events} previous webscrapes.')
+    files = fh.get_files(Path(OUTPUT_ROOT), pattern='*') # My files dont all have .csv extensions for some dumb reason
+    # sort the list oldest to newest
+    files.sort(key=lambda fn: fn.stat().st_mtime, reverse=True)
+    # recover the scrapes
+    logger.debug(f'Loaded {len(files)} scrapes.')
+    # logger.debug(files)
+    data_sample =pd.DataFrame() # blank frame
+    for fl in files:
+        if fl.is_file():
+            df = pd.read_csv(fl, parse_dates=['datetime'], date_parser=custom_date_parser)
+            # extract only forecast data
+            forecasts = df[df.type == 'Forecast']
+            # sort to find highest
+            highest = forecasts.sort_values(by=['level'], ascending=False)
+            data_sample = pd.concat([data_sample, highest[:1]], axis=0)
+    # logger.debug(data_sample)
+    data_sample.sort_values(by='datetime', inplace=True)
+    data_sample.reset_index(drop=True, inplace=True)
+    # logger.debug(forecasts_data)
+    # display only highest level and date
+    logger.debug(f'\n{data_sample.to_markdown()}')
+    logger.debug(data_sample.info())
+    return
+
+
+
+
 if __name__ == "__main__":
     # Logging Setup
     logger.remove()  # removes the default console logger provided by Loguru.
