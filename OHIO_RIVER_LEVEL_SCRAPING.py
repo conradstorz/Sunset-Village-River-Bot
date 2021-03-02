@@ -152,8 +152,8 @@ def get_NWS_web_data(site, cache=False):
     If CACHE then place the cleaned HTML into local storage for later processing by other code.
     """
     clean_soup = ws.retrieve_cleaned_html(site, cache)
-    content, id, name, date = pull_details(clean_soup)
-    return (content, id, name, date)
+    return pull_details(clean_soup)
+
 
 
 @logger.catch
@@ -171,23 +171,16 @@ def FixDate(s, scrape_date, time_zone="UTC"):
     month_digits, day_digits = date_string.split("/")
     if len(month_digits) + len(day_digits) != 4:
         raise AssertionError("Month or Day string not correctly extracted.")
-
     corrected_year = ts.apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
-
     # now place the timestamp back into the date object.
     corrected_datetime = datetime.datetime.combine(corrected_year, timestamp)
-
     return corrected_datetime.replace(tzinfo=pytz.UTC)
+
 
 
 @logger.catch
 def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
-    # TODO retrieve date of scrape from inside web_data.
-    # The date of the webscrape is only included in one place inside
-    # the original scrape.
     readings = []
-    # Retrieve scrape year so that we can supply it to the processing of the date codes.
-    yyyy = scrape_date.strftime("%Y")  # NWS website operates on UTC
     labels = ["datetime", "level", "flow"]
     for i, item in enumerate(web_data):
         if i >= 1:  # zeroth item is an empty list
@@ -204,32 +197,13 @@ def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
                 if pointer == 0:  # this is the element for date/time
                     date = FixDate(element, scrape_date)
                     element = ts.timefstring(date)
-                row_dict[
-                    labels[pointer]
-                ] = element  # TODO Add sanity check for this value being a string not an object.
+                row_dict[labels[pointer]] = element 
                 if pointer == 2:  # end of this reading
                     readings.append(row_dict)  # add to the compilation
                     # reset the dict for next reading
                     row_dict = {"guage": guage_id, "type": sect_name}
     return readings
 
-
-@logger.catch
-def compact_datestring(ds):
-    """Return a string representing datetime of provided tuple."""
-    return f"{ds[0]}{ds[1]}{ds[2]}_{ds[3]}{ds[4]}"
-
-
-@logger.catch
-def expand_datestring(ds):
-    """Return elements of provided datestring."""
-    x = ds.split("_")
-    m = x[0][:2]
-    d = x[0][2:4]
-    y = x[0][-4:]
-    t = x[1][:5]
-    z = x[1][-3:]
-    return (m, d, y, t, z)
 
 
 @logger.catch
@@ -247,11 +221,9 @@ def Main():
         # TODO verify successful conversion of data
         for item in tqdm(data_list, desc=friendly_name):
             logger.debug(item)
-
             date, time = time_now_string.split("_")  # split date from time
             yy, mm, dd = date.split("-")
             OP = f"{yy}/{mm}/{dd}/"
-
             OD = f"{OUTPUT_ROOT}{OP}"
             FN = f"{time_now_string}"
             fh.write_csv([item], filename=FN, directory=OD)
