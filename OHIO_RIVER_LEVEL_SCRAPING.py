@@ -21,15 +21,6 @@ import pytz
 from tqdm import tqdm
 from dateparser.search import search_dates
 from loguru import logger
-# Logging Setup
-logger.remove()  # removes the default console logger provided by Loguru.
-# I find it to be too noisy with details more appropriate for file logging.
-# INFO and messages of higher priority only shown on the console.
-logger.add(lambda msg: tqdm.write(msg, end=""), format="{message}", level="ERROR")
-# This creates a logging sink and handler that puts all messages at or above the TRACE level into a logfile for each run.
-logger.add(
-    "./LOGS/file_{time}.log", level="TRACE", encoding="utf8"
-)  # Unicode instructions needed to avoid file write errors.
 
 # this section imports code from the pypi repository (CFSIV-utils-Conradical) of my own utilities.
 import cfsiv_utils.WebScraping as ws
@@ -240,6 +231,7 @@ def display_cached_data(number_of_scrapes):
     Args:
         number_of_scrapes (int) : number of scrapes to process from newest towards oldest
     """
+    logger.debug(f'Reviewing {number_of_scrapes} previous webscrapes.')
     root = Path(Path.cwd(), "raw_web_scrapes")
     files = list(root.glob("*.rawhtml"))  # returns files ending with '.rawhtml'
     # sort the list oldest to newest
@@ -248,7 +240,7 @@ def display_cached_data(number_of_scrapes):
     sample = []
     for i in range(number_of_scrapes):
         sample.append(files[i])
-
+    logger.debug(f'Loaded {len(sample)} scrapes.')
     data_sample = []
     for fl in sample:
         data_list = []
@@ -260,21 +252,30 @@ def display_cached_data(number_of_scrapes):
         data_list = data_list[::-1]
         for i in range(9):
             data_sample.append(data_list[i])
-
+    logger.debug(f'Processed {len(data_sample)} samples.')
     for point in data_sample[::-1]:
+        logger.debug(f'Examining: {point}')
         datestamp = point["datetime"]
         if type(datestamp) == str:
             full_date = datestamp[:10]
         else:
             full_date = datestamp.strftime("%Y/%m/%d")
-
         _dummy = ts.apply_logical_year_value_to_monthday_pair(full_date, scrape_date)
         logger.info(f"Correct observation date: {_dummy}, original full date: {full_date}")
-    # scrapetime = from filename
     return
 
 
 if __name__ == "__main__":
+    # Logging Setup
+    logger.remove()  # removes the default console logger provided by Loguru.
+    # I find it to be too noisy with details more appropriate for file logging.
+    # INFO and messages of higher priority only shown on the console.
+    logger.add(lambda msg: tqdm.write(msg, end=""), format="{message}", level="ERROR")
+    # This creates a logging sink and handler that puts all messages at or above the TRACE level into a logfile for each run.
+    logger.add(
+        "./LOGS/file_{time}.log", level="TRACE", encoding="utf8"
+    )  # Unicode instructions needed to avoid file write errors.
+
     while True:
         Main()
         print("Sleeping...")
