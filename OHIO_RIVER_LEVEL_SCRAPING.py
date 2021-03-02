@@ -36,7 +36,7 @@ import cfsiv_utils.WebScraping as ws
 import cfsiv_utils.filehandling as fh
 import cfsiv_utils.time_strings as ts
 
-
+# These are the USGS identification numbers for river monitoring guages on the OHIO River
 RIVER_GUAGE_IDS = [
     141893,
     143063,
@@ -100,24 +100,11 @@ USGS_URLS = []
 for site in RIVER_GUAGE_IDS:
     USGS_URLS.append(f'{USGS_WEBSITE_HEAD_URL}{site}{USGS_WEBSITE_TAIL_URL}')
 
+# TODO need guage location and relative elevation data dictionary
 
-# TODO need guage location and elevation data
-mcalpine_upper = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=142935&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=obs&data%5B%5D=xml"
-mrklnd_lower = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=obs&data%5B%5D=xml"
-clifty_creek = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144877&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=obs&data%5B%5D=xml"
-lsvl_watertower = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=151578&allpoints=150960%2C141893%2C143063%2C144287%2C142160%2C145137%2C143614%2C141268%2C144395%2C143843%2C142481%2C143607%2C145086%2C142497%2C151795%2C152657%2C141266%2C145247%2C143025%2C142896%2C144670%2C145264%2C144035%2C143875%2C143847%2C142264%2C152144%2C143602%2C144126%2C146318%2C141608%2C144451%2C144523%2C144877%2C151578%2C142935%2C142195%2C146116%2C143151%2C142437%2C142855%2C142537%2C142598%2C152963%2C143203%2C143868%2C144676%2C143954%2C143995%2C143371%2C153521%2C153530%2C143683&data%5B%5D=obs&data%5B%5D=xml"
-cincy = "https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144451&allpoints=150960&data[]=obs&data[]=xml"
-
-
-POINTS_OF_INTEREST = [
-    mcalpine_upper,
-    mrklnd_lower,
-    clifty_creek,
-    lsvl_watertower,
-    cincy,
-]
 # TODO visualize data from guages to illustrate how a 'hump' of water moves down the river.
 # possibly by graphing the guages as a flat surface and the water elevation above that imagined flat river.
+
 # TODO predict the time of arrival of the 'hump' at various points. (machine learning?)
 
 OUTPUT_ROOT = "CSV_DATA/"
@@ -152,9 +139,6 @@ def pull_details(soup):
     # Search the comments for a date of this scrape.
     # (the NWS webscrape contains exactly 1 date/timestamp found inside of a comment).
     scrape_date = extract_date(c_list)
-    if scrape_date == None:
-        logger.error(f"Could not determine date of scrape from within html text.")
-        scrape_date = ts.UTC_NOW() # default value
     logger.info(f"Scrape date: {scrape_date}")
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
