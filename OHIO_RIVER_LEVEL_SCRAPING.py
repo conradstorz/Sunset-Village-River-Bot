@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """NWS website scraping for river guage observations and forecasts.
 This module will create local csv database of readings and forecasts.
@@ -10,13 +9,12 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 # import standard library modules
-from logging import error
 from time import sleep
 
 # import custom modules
 from pathlib import Path
 from bs4 import BeautifulSoup, Comment
-import datetime
+import datetime as dt
 import pytz
 from tqdm import tqdm
 from dateparser.search import search_dates
@@ -158,13 +156,13 @@ def FixDate(s, scrape_date, time_zone="UTC"):
     # TODO make more robust string spliting
     date_string, time_string = s.split()
     hours, minutes = time_string.split(":")
-    timestamp = datetime.time(int(hours), int(minutes))
+    timestamp = dt.time(int(hours), int(minutes))
     month_digits, day_digits = date_string.split("/")
     if len(month_digits) + len(day_digits) != 4:
         raise AssertionError("Month or Day string not correctly extracted.")
     corrected_year = ts.apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
     # now place the timestamp back into the date object.
-    corrected_datetime = datetime.datetime.combine(corrected_year, timestamp)
+    corrected_datetime = dt.datetime.combine(corrected_year, timestamp)
     return corrected_datetime.replace(tzinfo=pytz.UTC)
 
 
@@ -303,10 +301,10 @@ def display_cached_forecast_data(number_of_scrape_data_events):
         pass
     return
 
-from datetime import datetime
+# from datetime import datetime
 @logger.catch
 def display_cached_forecast_data2(number_of_scrape_data_events):
-    custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
+    custom_date_parser = lambda x: dt.datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
     logger.debug(f'Reviewing {number_of_scrape_data_events} previous webscrapes.')
     files = fh.get_files(Path(OUTPUT_ROOT), pattern='*') # My files dont all have .csv extensions for some dumb reason
     # sort the list oldest to newest
