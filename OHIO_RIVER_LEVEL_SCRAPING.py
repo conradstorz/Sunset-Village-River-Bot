@@ -15,6 +15,7 @@ from time import sleep
 from pathlib import Path
 from bs4 import BeautifulSoup, Comment
 import datetime as dt
+from numpy import datetime64
 import pytz
 from tqdm import tqdm
 from dateparser.search import search_dates
@@ -297,14 +298,17 @@ def display_cached_forecast_data(number_of_scrape_data_events):
         logger.debug(f'\n{highest[:1]}')
         highest_forecasts.append(highest)
     for itm in highest_forecasts:
-        # logger.info(f'\n{itm}')
+        logger.info(f'\n{itm}')
         pass
     return
 
 # from datetime import datetime
 @logger.catch
 def display_cached_forecast_data2(number_of_scrape_data_events):
-    custom_date_parser = lambda x: dt.datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
+    def custom_date_parser(x):
+        if type(x) == str:
+            return dt.datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
+        return x
     logger.debug(f'Reviewing {number_of_scrape_data_events} previous webscrapes.')
     files = fh.get_files(Path(OUTPUT_ROOT), pattern='*') # My files dont all have .csv extensions for some dumb reason
     # sort the list oldest to newest
@@ -312,7 +316,7 @@ def display_cached_forecast_data2(number_of_scrape_data_events):
     # recover the scrapes
     logger.debug(f'Loaded {len(files)} scrapes.')
     # logger.debug(files)
-    data_sample =pd.DataFrame() # blank frame
+    data_sample = pd.DataFrame() # blank frame
     for fl in files:
         if fl.is_file():
             df = pd.read_csv(fl, parse_dates=['datetime'], date_parser=custom_date_parser)
@@ -320,8 +324,14 @@ def display_cached_forecast_data2(number_of_scrape_data_events):
             forecasts = df[df.type == 'Forecast']
             # sort to find highest
             highest = forecasts.sort_values(by=['level'], ascending=False)
-            data_sample = pd.concat([data_sample, highest[:1]], axis=0)
+            if type(highest['datetime']) == datetime64:
+                # logger.info(f'Highest..\n{highest[:1].to_markdown()}')
+                data_sample = pd.concat([data_sample, highest[:1]], axis=0)
+            else:
+                logger.error(f'Bad datetime entry...\n{highest[:1].to_markdown()}')
     # logger.debug(data_sample)
+    # logger.info(f'\n{data_sample.to_markdown()}')
+    # logger.info(data_sample.info())
     data_sample.sort_values(by='datetime', inplace=True)
     data_sample.reset_index(drop=True, inplace=True)
     # logger.debug(forecasts_data)
