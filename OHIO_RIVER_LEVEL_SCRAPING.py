@@ -305,39 +305,41 @@ def display_cached_forecast_data(number_of_scrape_data_events):
 # from datetime import datetime
 @logger.catch
 def display_cached_forecast_data2(number_of_scrape_data_events):
-    def custom_date_parser(x):
-        if type(x) == str:
-            return dt.datetime.strptime(x, "%Y-%m-%d_%H:%M:%SUTC")
-        return x
-    logger.debug(f'Reviewing {number_of_scrape_data_events} previous webscrapes.')
+    logger.debug(f'Reviewing {number_of_scrape_data_events} previous data gathered.')
     files = fh.get_files(Path(OUTPUT_ROOT), pattern='*') # My files dont all have .csv extensions for some dumb reason
+    # remove the NOT files entries
+    files = [file for file in files if file.is_file()]
     # sort the list oldest to newest
     files.sort(key=lambda fn: fn.stat().st_mtime, reverse=True)
     # recover the scrapes
     logger.debug(f'Loaded {len(files)} scrapes.')
     # logger.debug(files)
+    scrapes = files[:number_of_scrape_data_events]
+    logger.debug(f'filtered {len(scrapes)} scrapes.')    
     data_sample = pd.DataFrame() # blank frame
-    for fl in files:
+    for fl in scrapes:
         if fl.is_file():
-            df = pd.read_csv(fl, parse_dates=['datetime'], date_parser=custom_date_parser)
+            logger.info(f'Loading file: {fl}')
+            # df = pd.read_csv(fl, parse_dates=['datetime'], date_parser=custom_date_parser)
+            df = pd.read_csv(fl)
+            df["datetime"]= pd.to_datetime(df["datetime"], format="%Y-%m-%d_%H:%M:%SUTC", errors='coerce')
             # extract only forecast data
             forecasts = df[df.type == 'Forecast']
             # sort to find highest
             highest = forecasts.sort_values(by=['level'], ascending=False)
-            if type(highest['datetime']) == datetime64:
-                # logger.info(f'Highest..\n{highest[:1].to_markdown()}')
-                data_sample = pd.concat([data_sample, highest[:1]], axis=0)
-            else:
-                logger.error(f'Bad datetime entry...\n{highest[:1].to_markdown()}')
+            # logger.info(f'Highest..\n{highest[:1].to_markdown()}')
+            data_sample = pd.concat([data_sample, highest[:1]], axis=0)
     # logger.debug(data_sample)
     # logger.info(f'\n{data_sample.to_markdown()}')
     # logger.info(data_sample.info())
-    data_sample.sort_values(by='datetime', inplace=True)
-    data_sample.reset_index(drop=True, inplace=True)
-    # logger.debug(forecasts_data)
-    # display only highest level and date
-    logger.debug(f'\n{data_sample.to_markdown()}')
-    logger.debug(data_sample.info())
+    if data_sample.empty == False:
+        # logger.debug(data_sample.dtypes)
+        data_sample.sort_values(by='datetime', inplace=True)
+        data_sample.reset_index(drop=True, inplace=True)
+        # logger.debug(forecasts_data)
+        # display only highest level and date
+        logger.debug(f'\n{data_sample.to_markdown()}')
+        logger.debug(data_sample.info())
     return
 
 
