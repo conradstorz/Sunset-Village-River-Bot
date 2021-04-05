@@ -9,6 +9,7 @@ A seperate program runs to analyze data and tweet when there is info to share.
 If tweeting reports rising water then additional runs of scraping routine can be triggered.
 """
 # import standard library modules
+import os
 from time import sleep
 
 # import custom modules
@@ -25,6 +26,9 @@ from loguru import logger
 import cfsiv_utils.WebScraping as ws
 import cfsiv_utils.filehandling as fh
 import cfsiv_utils.time_strings as ts
+import cfsiv_utils.log_handling as lh
+
+RUNTIME_NAME = Path(__file__)
 
 # These are the USGS identification numbers for river monitoring guages on the OHIO River
 RIVER_GUAGE_IDS = [
@@ -344,17 +348,9 @@ def display_cached_forecast_data2(number_of_scrape_data_events):
 
 
 
-
 if __name__ == "__main__":
     # Logging Setup
-    logger.remove()  # removes the default console logger provided by Loguru.
-    # I find it to be too noisy with details more appropriate for file logging.
-    # INFO and messages of higher priority only shown on the console.
-    logger.add(lambda msg: tqdm.write(msg, end=""), format="{message}", level="ERROR")
-    # This creates a logging sink and handler that puts all messages at or above the TRACE level into a logfile for each run.
-    logger.add(
-        "./LOGS/file_{time}.log", level="TRACE", encoding="utf8"
-    )  # Unicode instructions needed to avoid file write errors.
+    lh.defineLoggers(RUNTIME_NAME.stem) # Path.stem returns only the name of the file without extension.
 
     while True:
         Main()
