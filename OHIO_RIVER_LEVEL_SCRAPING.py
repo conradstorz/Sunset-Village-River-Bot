@@ -350,8 +350,10 @@ def display_cached_forecast_data2(number_of_scrape_data_events):
 
 if __name__ == "__main__":
     # Logging Setup
-    lh.defineLoggers(RUNTIME_NAME.stem) # Path.stem returns only the name of the file without extension.
-
+    lh.defineLoggers(
+        RUNTIME_NAME.stem, # Path.stem returns only the name of the file without extension.
+        CONSOLE='ERROR' # supress most output to console.
+    )
     while True:
         Main()
         print("Sleeping...")
