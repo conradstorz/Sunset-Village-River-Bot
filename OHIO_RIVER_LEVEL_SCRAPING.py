@@ -110,6 +110,7 @@ def extract_date(text_list):
     date_list = ts.extract_date(text_list)
     for date in date_list:
         if date != None:
+            logger.debug(f'{date } Date found in {text_list}')
             return date
     logger.debug(f'No parseable date found in: {text_list}')
     logger.warning('No parseable date found.')
@@ -125,18 +126,20 @@ def pull_details(soup):
         soup (bs4.BeautifulSoup): NWS guage scrape
     """
     guage_id = soup.h1["id"]
-    guage_string = soup.h1.string
+    guage_name_string = soup.h1.string
     # find the comments.
     comments = soup.findAll(text=lambda text: isinstance(text, Comment))
     # convert the findAll.ResultSet into a plain list.
     c_list = [c for c in comments]
     # Search the comments for a date of this scrape.
-    # (the NWS webscrape contains exactly 1 date/timestamp found inside of a comment).
+    # (the NWS webscrape contains exactly 1 date/timestamp of the scrape found inside of a comment).
     scrape_date = extract_date(c_list)
     logger.info(f"Scrape date: {scrape_date}")
+    # find all of the observation and forecast data
     nws_class = soup.find(class_="obs_fores")
     nws_obsfores_contents = nws_class.contents
-    return (nws_obsfores_contents, guage_id, guage_string, scrape_date)
+    return (nws_obsfores_contents, guage_id, guage_name_string, scrape_date)
+
 
 
 @logger.catch
@@ -161,10 +164,13 @@ def FixDate(s, scrape_date, time_zone="UTC"):
     # TODO make more robust string spliting
     date_string, time_string = s.split()
     hours, minutes = time_string.split(":")
+    # build a datetime time object
     timestamp = dt.time(int(hours), int(minutes))
+    # recover the month and day
     month_digits, day_digits = date_string.split("/")
     if len(month_digits) + len(day_digits) != 4:
         raise AssertionError("Month or Day string not correctly extracted.")
+    # use the available information to determine what year the webscrape data belongs to.
     corrected_year = ts.apply_logical_year_value_to_monthday_pair(date_string, scrape_date)
     # now place the timestamp back into the date object.
     corrected_datetime = dt.datetime.combine(corrected_year, timestamp)
@@ -177,10 +183,11 @@ def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
     readings = []
     labels = ["datetime", "level", "flow"]
     for i, item in enumerate(web_data):
-        if i >= 1:  # zeroth item is an empty list
+        if i >= 1:  # zeroth item is an empty list. skip it.
             # locate the name of this section (observed / forecast)
             section = item.find(class_="data_name").contents[0]
             sect_name = section.split()[0]
+            # Initialize a new dictionary.
             row_dict = {"guage": guage_id, "type": sect_name}
             # extract all readings from this section
             section_data_list = item.find_all(class_="names_infos")
@@ -189,8 +196,10 @@ def sort_and_label_data(web_data, guage_id, guage_string, scrape_date):
                 element = data.contents[0]
                 pointer = i % 3  # each reading contains 3 unique data points
                 if pointer == 0:  # this is the element for date/time
+                    # This element needs modification
                     date = FixDate(element, scrape_date)
                     element = ts.timefstring(date)
+                # Add the element to the dictionary
                 row_dict[labels[pointer]] = element 
                 if pointer == 2:  # end of this reading
                     readings.append(row_dict)  # add to the compilation
