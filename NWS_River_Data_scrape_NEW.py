@@ -22,7 +22,8 @@ from dateparser.search import search_dates
 from pprint import saferepr
 # from pprint import pprint
 
-from WebScraping import retrieve_cleaned_html
+import cfsiv_utils.WebScraping as ws
+# from WebScraping import retrieve_cleaned_html
 from lxml import etree as ET
 
 
@@ -91,7 +92,7 @@ def current_river_conditions(monitoring_point, dct):
     # TODO this routine is too fragile and needs better error handling
     this_river = RIVER_MONITORING_POINTS[monitoring_point]
     logger.info("Scraping webite..." + saferepr(this_river["Friendly_Name"]))
-    html = retrieve_cleaned_html(this_river["Dam_URL"])
+    html = ws.retrieve_cleaned_html(this_river["Dam_URL"])
     if html != None:
         logger.info('...scanning list of "map" objects...')
         map_raw = html.select("map")[0]  # grab first item named 'map'
