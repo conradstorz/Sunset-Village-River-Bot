@@ -433,6 +433,8 @@ def Main(credentials):
                 DisplayMessage(
                     f"  {new_level:.2f}ft Latest. Trend: {trend}   Now {new_level:.2f}ft   Trend: {trend}"
                 )
+            # TODO replace this code with a simple calculation of next update time
+            # TODO the 50 second updates simply clog the output screen and systemd log.
             if (
                 startDisplay % 50
             ) == 0:  # every 50 seconds send a progress indication to attached display.
