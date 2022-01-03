@@ -285,6 +285,7 @@ def build_tweet(rivr_conditions_dict, db):
     # TODO put these data gathering functions in seperate functions and return named tuples of results
     # TODO (damname,observationtype,timestamp,level)
     # TODO organize data as: currentobservation,highestforecast,eventualforecast)
+    # TODO (option: use a data object to hold values rather than namedtuple)
     """
     from collections import namedtuple
 
@@ -400,6 +401,7 @@ def Main(credentials):
     twitter = Twython(a, b, c, d)
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
+    # TODO place db functions into its own function
     storage_db = PupDB(PupDB_FILENAME)
     last_tweet = storage_db.get(PupDB_MRTkey)
     last_level = storage_db.get(PupDB_MRLkey)
@@ -413,6 +415,7 @@ def Main(credentials):
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
+        # TODO remove tweet functions from prediction function
         wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
         forecast_level = storage_db.get(PupDB_MRFkey)
         trend = DetermineTrend(new_level, forecast_level)
@@ -420,6 +423,7 @@ def Main(credentials):
         print(f"New Level: {new_level}")
         print(f"Trend: {trend}")
         while wait > 0:
+            # TODO place all waiting actions into seperate function (e.g. wait=AreWeThereYet(wait) )
             startDisplay = int(time.time())
             time.sleep(1)  # guarantee at least a one second pause
             if (
