@@ -9,7 +9,6 @@ the level of the river at that point can be calculated.
 
 from loguru import logger
 
-logger.remove()  # stop any default logger
 LOGGING_LEVEL = "INFO"
 
 from os import sys, path
@@ -197,6 +196,7 @@ def processRiverData():
 
 @logger.catch
 def defineLoggers():
+    logger.remove()  # stop any default logger    
     logger.add(
         sys.stderr,
         colorize=True,
