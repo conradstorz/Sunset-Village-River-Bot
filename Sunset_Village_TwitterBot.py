@@ -17,8 +17,6 @@ from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
 from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
 from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
 
-# from pprint import saferepr
-# from pprint import pprint
 from pupdb.core import PupDB
 
 # detect various add-on Rpi hats
@@ -380,7 +378,7 @@ def DisplayMessage(message):
         random_to_solid(SENSEHAT, colorName=lastColor, fast=True)
     return True
 
-
+@logger.catch
 def DetermineTrend(now, soon):
     """ returns text describing if the trend of the river is rising or falling.
     now = float value of current level of river
@@ -392,32 +390,39 @@ def DetermineTrend(now, soon):
         return "Rising"
     return "Flat"
 
-
+@logger.catch
 def AreWeThereYet(wait,new_level,trend):
     """ returns how much longer to wait until next report should be generated.
     wait = int: number of seconds to wait
     This function updates any attached displays and then returns a new wait time.
     """
     startDisplay = int(time.time())
-    time.sleep(1)  # guarantee at least a one second pause
+    time.sleep(5)  # guarantee at least a 5 second pause
     if (
         startDisplay % 10
     ) == 0:  # update external displays connected to server each ten seconds.
-        print(".", end="", flush=True)
         DisplayMessage(
             f"  {new_level:.2f}ft Latest. Trend: {trend}   Now {new_level:.2f}ft   Trend: {trend}"
         )
-    # TODO replace this code with a simple calculation of next update time
-    # TODO the 50 second updates simply clog the output screen and systemd log.
-    if (
-        startDisplay % 50
-    ) == 0:  # every 50 seconds send a progress indication to attached display.
-        print("")
-        print(f"Wait time remaining: {wait}")
     endDisplay = int(time.time())
     elapsed = endDisplay - startDisplay
-    print(f"{elapsed}.", end="", flush=True)
     return wait - elapsed
+
+
+@logger.catch
+def ActivateDatabase(PupDB_FILENAME):
+    # TODO place db functions into its own function
+    storage_db = PupDB(PupDB_FILENAME)
+    last_tweet = storage_db.get(PupDB_MRTkey)
+    last_level = storage_db.get(PupDB_MRLkey)
+    if last_tweet is None:    # Pre-load empty database
+        last_tweet = str(TimeNow)
+        last_level = MINIMUM_CONCERN_LEVEL
+        storage_db.set(PupDB_MRTkey, last_tweet)
+        storage_db.set(PupDB_MRLkey, last_level)
+        forecast_level = last_level
+        storage_db.set(PupDB_MRFkey, forecast_level)
+    return storage_db
 
 
 @logger.catch
@@ -430,17 +435,7 @@ def Main(credentials):
     twitter = Twython(a, b, c, d)
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
-    # TODO place db functions into its own function
-    storage_db = PupDB(PupDB_FILENAME)
-    last_tweet = storage_db.get(PupDB_MRTkey)
-    last_level = storage_db.get(PupDB_MRLkey)
-    if last_tweet is None:    # Pre-load empty database
-        last_tweet = str(TimeNow)
-        last_level = MINIMUM_CONCERN_LEVEL
-        storage_db.set(PupDB_MRTkey, last_tweet)
-        storage_db.set(PupDB_MRLkey, last_level)
-        forecast_level = last_level
-        storage_db.set(PupDB_MRFkey, forecast_level)
+    storage_db = ActivateDatabase(PupDB_FILENAME)
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
@@ -448,9 +443,9 @@ def Main(credentials):
         wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
         forecast_level = storage_db.get(PupDB_MRFkey)
         trend = DetermineTrend(new_level, forecast_level)
-        print(f"New wait time: {wait}")
-        print(f"New Level: {new_level}")
-        print(f"Trend: {trend}")
+        logger.info(f"New wait time: {wait}")
+        logger.info(f"New Level: {new_level}")
+        logger.info(f"Trend: {trend}")
         while wait > 0:
             wait=AreWeThereYet(wait,new_level,trend)
     return
