@@ -5,24 +5,16 @@
 river level data for both Markland and McAlpine dams. By using the mileage marker for Bushman's Lake 
 the level of the river at that point can be calculated.
 """
-# from tabulate import tabulate
 
 from loguru import logger
-
 LOGGING_LEVEL = "INFO"
 
 from os import sys, path
 from datetime import datetime, timezone
 from dateutil import parser as dateparser
-# from dateutil.utils import default_tzinfo
-# import datefinder
 from dateparser.search import search_dates
-
 from pprint import saferepr
-# from pprint import pprint
-
 import cfsiv_utils.WebScraping as ws
-# from WebScraping import retrieve_cleaned_html
 from lxml import etree as ET
 
 
