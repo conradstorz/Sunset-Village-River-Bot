@@ -7,13 +7,13 @@ the slope of the river to get the calculated level at our property.
 """
 import sys
 import time
-from datetime import datetime, timezone
-from datetime import timedelta
+from datetime import datetime
+# from datetime import timedelta
 from dateutil import parser
 
 # from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
-from NWS_River_Data_scrape_NEW import RIVER_MONITORING_POINTS
+# from NWS_River_Data_scrape_NEW import RIVER_MONITORING_POINTS
 from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
 from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
 
@@ -67,12 +67,14 @@ LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
 
 
 from twython import Twython, TwythonError
-from TwitterCredentials import APP_KEY
-from TwitterCredentials import APP_SECRET
-from TwitterCredentials import OAUTH_TOKEN
-from TwitterCredentials import OAUTH_TOKEN_SECRET
-
-TWITTER_CREDENTIALS = (APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
+from dotenv import dotenv_values
+TwitterCredentials = dotenv_values(".env")
+TWITTER_CREDENTIALS = (
+    TwitterCredentials["APP_KEY"], 
+    TwitterCredentials["APP_SECRET"], 
+    TwitterCredentials["OAUTH_TOKEN"], 
+    TwitterCredentials["OAUTH_TOKEN_SECRET"],
+    )
 
 
 from os import sys, path
@@ -268,7 +270,7 @@ def assemble_text(dict_data, forecast_data, db):
     t1 = f"Latest Observation:{upriver_name} {upriver_level}ft."
     t2 = f" {dnriver_name} {dnriver_level}ft."
     t3 = f" Calculated Level at Bushmans:{projection:.2f}ft. future:{forecast:.2f}ft."
-    tweet = f"{t1}{t2}{t3} ::: Data source: http://portky.com/river.php"
+    tweet = f"{t1}{t2}{t3} ::: Data source: NOAA"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
     # place this river level projection into longterm storage database
@@ -391,6 +393,33 @@ def DetermineTrend(now, soon):
     return "Flat"
 
 
+def AreWeThereYet(wait,new_level,trend):
+    """ returns how much longer to wait until next report should be generated.
+    wait = int: number of seconds to wait
+    This function updates any attached displays and then returns a new wait time.
+    """
+    startDisplay = int(time.time())
+    time.sleep(1)  # guarantee at least a one second pause
+    if (
+        startDisplay % 10
+    ) == 0:  # update external displays connected to server each ten seconds.
+        print(".", end="", flush=True)
+        DisplayMessage(
+            f"  {new_level:.2f}ft Latest. Trend: {trend}   Now {new_level:.2f}ft   Trend: {trend}"
+        )
+    # TODO replace this code with a simple calculation of next update time
+    # TODO the 50 second updates simply clog the output screen and systemd log.
+    if (
+        startDisplay % 50
+    ) == 0:  # every 50 seconds send a progress indication to attached display.
+        print("")
+        print(f"Wait time remaining: {wait}")
+    endDisplay = int(time.time())
+    elapsed = endDisplay - startDisplay
+    print(f"{elapsed}.", end="", flush=True)
+    return wait - elapsed
+
+
 @logger.catch
 def Main(credentials):
     defineLoggers()
@@ -423,27 +452,7 @@ def Main(credentials):
         print(f"New Level: {new_level}")
         print(f"Trend: {trend}")
         while wait > 0:
-            # TODO place all waiting actions into seperate function (e.g. wait=AreWeThereYet(wait) )
-            startDisplay = int(time.time())
-            time.sleep(1)  # guarantee at least a one second pause
-            if (
-                startDisplay % 10
-            ) == 0:  # update external displays connected to server each ten seconds.
-                print(".", end="", flush=True)
-                DisplayMessage(
-                    f"  {new_level:.2f}ft Latest. Trend: {trend}   Now {new_level:.2f}ft   Trend: {trend}"
-                )
-            # TODO replace this code with a simple calculation of next update time
-            # TODO the 50 second updates simply clog the output screen and systemd log.
-            if (
-                startDisplay % 50
-            ) == 0:  # every 50 seconds send a progress indication to attached display.
-                print("")
-                print(f"Wait time remaining: {wait}")
-            endDisplay = int(time.time())
-            elapsed = endDisplay - startDisplay
-            print(f"{elapsed}.", end="", flush=True)
-            wait = wait - elapsed
+            wait=AreWeThereYet(wait,new_level,trend)
     return
 
 
@@ -458,13 +467,13 @@ def defineLoggers():
     logger.add(  # create a new log file for each run of the program
         "./LOGS/" + RUNTIME_NAME + "_{time}.log",
         retention="10 days",
-        compression="zip",
+        # compression="zip",
         level="DEBUG",  # always send debug output to file
     )
     logger.add(  # create a log file for each run of the program
         "./LOGS/" + RUNTIME_NAME + ".log",
         retention="10 days",
-        compression="zip",
+        # compression="zip",
         level="DEBUG",  # always send debug output to file
     )
     return
