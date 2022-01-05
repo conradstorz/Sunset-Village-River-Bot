@@ -7,6 +7,8 @@ the slope of the river to get the calculated level at our property.
 """
 import sys
 import time
+import zoneinfo
+Zone_NYC = zoneinfo.ZoneInfo("America/New_York")
 from datetime import datetime
 # from datetime import timedelta
 from dateutil import parser
@@ -300,7 +302,7 @@ def build_tweet(rivr_conditions_dict, db):
     for lbl in OBSERVATION_TAGS:
         current_observations = extract_data(rivr_conditions_dict, lbl)
         if current_observations == {}:
-            logger.error(f"No data returned from {lbl}.")
+            logger.error(f"No data returned from {lbl}. ABORTING")
             return ""  # error condition
         obsv_dict.update(current_observations)
     # extract 1 latest observation for each dam
@@ -351,7 +353,9 @@ def UpdatePrediction(twtr, time, db):
         logger.info("Tweeting...")
         DisplayMessage("Reading new river level...")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS
+        logger.info("Getting level data...")
         data = get_level_data()
+        logger.debug(f"DATA={data}")
         status = build_tweet(data, db)
         if len(status) > 0:
             DisplayMessage("Tweeting...")
@@ -410,7 +414,7 @@ def AreWeThereYet(wait,new_level,trend):
 
 
 @logger.catch
-def ActivateDatabase(PupDB_FILENAME):
+def ActivateDatabase(PupDB_FILENAME, TimeNow):
     # TODO place db functions into its own function
     storage_db = PupDB(PupDB_FILENAME)
     last_tweet = storage_db.get(PupDB_MRTkey)
@@ -435,7 +439,7 @@ def Main(credentials):
     twitter = Twython(a, b, c, d)
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
-    storage_db = ActivateDatabase(PupDB_FILENAME)
+    storage_db = ActivateDatabase(PupDB_FILENAME, TimeNow)
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
