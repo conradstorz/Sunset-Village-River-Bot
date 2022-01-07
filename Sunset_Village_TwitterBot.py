@@ -158,6 +158,8 @@ def extract_data(map_data, lbl_str):
     """
     # scan dictionary for specified observations
     observations = {}
+    if map_data != type(dict):
+        return observations
     for line in map_data.keys():
         logger.debug(f"Map Data Key: {line}")
         logger.debug(f"data:{map_data[line][0]} label:{lbl_str}")
@@ -301,7 +303,7 @@ def build_tweet(rivr_conditions_dict, db):
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
         current_observations = extract_data(rivr_conditions_dict, lbl)
-        if current_observations == {}:
+        if current_observations == {} or current_observations == None:
             logger.error(f"No data returned from {lbl}. ABORTING")
             return ""  # error condition
         obsv_dict.update(current_observations)
@@ -355,7 +357,9 @@ def UpdatePrediction(twtr, time, db):
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS
         logger.info("Getting level data...")
         data = get_level_data()
-        logger.debug(f"DATA={data}")
+        logger.debug(f"get_level_data={data}")
+        if data == []:
+            logger.error(f"Did not tweet. No tweet generated. No data available.")
         status = build_tweet(data, db)
         if len(status) > 0:
             DisplayMessage("Tweeting...")
