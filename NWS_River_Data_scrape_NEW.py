@@ -57,7 +57,7 @@ RIVER_MONITORING_POINTS = {
 }
 
 DAMS = list(RIVER_MONITORING_POINTS.keys())
-IMPORTANT_OBSERVATIONS = ["Forecast:", "Latest", "Highest"]
+IMPORTANT_OBSERVATIONS = ['Latest  observed', 'Highest  Forecast:']
 
 
 @logger.catch
@@ -100,7 +100,7 @@ def current_river_conditions(monitoring_point, dct):
     map_dict = dct
 
     for child in root_map:
-        # logger.debug("root_map_child tag: " + saferepr(child.tag))
+        logger.debug(f"root_map_child tag: {saferepr(child.tag)}")
         try:
             child_list = child.attrib["alt"].split()
             child_list.append(RIVER_MONITORING_POINTS[monitoring_point]["milemarker"])
@@ -108,13 +108,14 @@ def current_river_conditions(monitoring_point, dct):
             child_list.append(
                 RIVER_MONITORING_POINTS[monitoring_point]["guage_elevation"]
             )
-            # logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
+            logger.debug(f"Raw 'child.attrib['alt']': {saferepr(child.attrib['alt'])}")
+            logger.debug("Looking for date...")
             searchdate = search_dates(child.attrib["title"], languages=["en"])
             if type(searchdate) == list:
                 child_date = searchdate[0][1]
                 date_iso = ISO_datestring(child_date, child_list)
                 child_list.append(date_iso)
-                # logger.debug("datestamp search result:" + str(date_iso))
+                logger.debug(f"datestamp search result: {str(date_iso)}")
                 if date_iso in map_dict:
                     # should only happen if two observations have the same datestamp
                     logger.error("duplicate key!")  # TODO raise dupkey error
@@ -127,9 +128,9 @@ def current_river_conditions(monitoring_point, dct):
                     map_dict[observation_key] = child_list
             else:
                 logger.debug("no date found")
-                logger.debug("Raw 'attrib' 'alt': " + saferepr(child.attrib["alt"]))
-                logger.debug(f"datestamp search result:{type(searchdate)}")
-                logger.debug(saferepr(child.attrib))
+                logger.debug(f"Raw 'child.attrib['alt']': {saferepr(child.attrib['alt'])}")
+                logger.debug(f"datestamp search result:{searchdate}")
+                logger.debug(f"Raw 'child.attrib': {saferepr(child.attrib)}")
         except ValueError as e:
             logger.debug("no date")
             logger.debug("child element result:" + str(child))
@@ -137,7 +138,7 @@ def current_river_conditions(monitoring_point, dct):
         except KeyError:
             logger.debug("no title")
             logger.debug("child element result:" + str(child))
-    logger.debug(f"Current_River_Conditions function results: {saferepr(map_dict)}")
+    # logger.debug(f"Current_River_Conditions function results: {saferepr(map_dict)}")
     return map_dict
 
 
@@ -171,18 +172,22 @@ def processRiverData():
     logger.info("Process River Data Start: " + RUNTIME_NAME)
     results = {}
     for name in DAMS:
+        logger.info(f"Getting conditions for {name}")
         results = current_river_conditions(name, results)
-    if results == {}:
-        return []  # error condition
-    times = list(results.keys())
-    times = sorted(times)
-    output = {}
-    for item in times:
-        if results[item][0] in IMPORTANT_OBSERVATIONS:
-            logger.debug(f"Raw item: {saferepr(results[item])}")
+        if results == {} or results == None:
+            logger.error(f"Empty dict returned for dam: {name}")
+            return []  # error condition
+        times = list(results.keys())
+        times = sorted(times)
+        output = {}
+        for item in times:
             sani = clean_item(results[item])
-            logger.debug(f"Cleaned item: {sani}")
-            output[item] = sani
+            if sani[0] in IMPORTANT_OBSERVATIONS:
+                logger.debug("Important observation found.")
+                logger.debug(f"Raw item: {saferepr(results[item])}")
+                # sani = clean_item(results[item])
+                logger.debug(f"Cleaned item: {sani}")
+                output[item] = sani
     return output
 
 
