@@ -360,12 +360,16 @@ def UpdatePrediction(twtr, time, db):
         logger.debug(f"get_level_data={data}")
         if data == []:
             logger.error(f"Did not tweet. No tweet generated. No data available.")
+            logger.info(f"Recommend waiting 10 minutes to retry.")
+            return (600, latest_level) # return a 10 minute waittime for retry
         status = build_tweet(data, db)
         if len(status) > 0:
             DisplayMessage("Tweeting...")
             send_tweet(db, time, status, twtr)
         else:
             logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
+            logger.info(f"Recommend waiting 10 minutes to retry.")
+            return (600, latest_level) # return a 10 minute waittime for retry
     else:
         logger.info("Too soon to tweet.")
         waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
