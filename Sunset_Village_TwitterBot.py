@@ -5,6 +5,7 @@
 based on the NWS website data for the river level both upstream and downstream then calculating 
 the slope of the river to get the calculated level at our property. 
 """
+from pprint import saferepr
 import sys
 import time
 import zoneinfo
@@ -151,24 +152,26 @@ def sanitize(itm):
 
 
 @logger.catch
-def extract_data(map_data, lbl_str):
+def extract_data(cleaned_map_data, lbl_str):
     """ take the 'map' data dict and extract entries matching supplied label.
     We know the 'map' contains entries of observations and forecasts. Each entry
     has the name of the dam as the last item three from the end of the line.
     """
     # scan dictionary for specified observations
     observations = {}
-    if map_data != type(dict):
-        return observations
-    for line in map_data.keys():
-        logger.debug(f"Map Data Key: {line}")
-        logger.debug(f"data:{map_data[line][0]} label:{lbl_str}")
-        if map_data[line][0] == lbl_str:
-            key = f"{map_data[line][-3]}{map_data[line][-1]}"
-            logger.debug(f"Observation Tag: {key}")
-            obsrv = sanitize(map_data[line])
+    logger.info(f"{cleaned_map_data=}")
+    logger.info(f"Looking for: {lbl_str}")
+    for key in cleaned_map_data.keys():
+        logger.debug(f"Map Data Key: {key}")
+        data = cleaned_map_data[key][0]
+        logger.debug(f"Map Data: {data}")
+        if  data == lbl_str:
+            logger.debug(f"Observation Tag: {data}")
+            obsrv = sanitize(cleaned_map_data[key])
             observations[key] = obsrv
             logger.debug(f"Observation: {obsrv}")
+        else:
+            logger.debug("Not found")
     return observations
 
 
@@ -181,9 +184,10 @@ def extract_forecast(obsv_data):
     """
     # scan dictionary for specified observations
     observations = {}
-    logger.debug("Scanning for Highest Forecast observations:")
+    logger.info("Scanning for Highest Forecast observations:")
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
+        logger.debug(obsv_data[line])
         if obsv_data[line][0] == FORECAST_TAG:
             logger.debug("Highest Forecast line:")
             damname = obsv_data[line][-3]
@@ -204,14 +208,15 @@ def extract_latest(obsv_data):
     """
     # scan dictionary for specified observations
     observations = {}
-    logger.debug("Scanning for latest observations:")
+    logger.info("Scanning for latest observations:")
     for line in obsv_data.keys():
+        logger.debug(f"Observation Key: {line}")
         logger.debug(obsv_data[line])
         if obsv_data[line][0] == LATEST_TAG:
+            logger.debug("Latest Forecast line:")
             damname = obsv_data[line][-3]
             if damname not in observations.keys():
                 observations[damname] = obsv_data[line]
-                logger.debug("Latest line:")
                 logger.debug(observations[damname])
     return observations
 
@@ -302,10 +307,10 @@ def build_tweet(rivr_conditions_dict, db):
     """
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
+        logger.info(f'Searching for tag: {lbl}')
+        logger.info(f"{rivr_conditions_dict=}")
         current_observations = extract_data(rivr_conditions_dict, lbl)
-        if current_observations == {} or current_observations == None:
-            logger.error(f"No data returned from {lbl}. ABORTING")
-            return ""  # error condition
+        logger.info(f"{current_observations=}")
         obsv_dict.update(current_observations)
     # extract 1 latest observation for each dam
     logger.debug(f"Observation dict: {obsv_dict}")
@@ -362,6 +367,8 @@ def UpdatePrediction(twtr, time, db):
             logger.error(f"Did not tweet. No tweet generated. No data available.")
             logger.info(f"Recommend waiting 10 minutes to retry.")
             return (600, latest_level) # return a 10 minute waittime for retry
+        logger.info(f"Ready to build tweet from data of type: {type(data)}")
+        logger.debug(f"tweet data: {saferepr(data)}")
         status = build_tweet(data, db)
         if len(status) > 0:
             DisplayMessage("Tweeting...")
@@ -468,7 +475,7 @@ def defineLoggers():
     logger.add(
         sys.stderr,
         colorize=True,
-        format="<green>{time}</green> {level} <red>{message}</red>",
+        format="<green>{time}</green> {level} <blue>{message}</blue>",
         level=LOGGING_LEVEL,
     )
     logger.add(  # create a new log file for each run of the program
