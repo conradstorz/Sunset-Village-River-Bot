@@ -168,7 +168,7 @@ def processRiverData():
     """get current data from NOAA website.
     Organize data as dictionary keyed by timestamps+damname.
     """
-    logger.info("Program Start: " + RUNTIME_NAME)
+    logger.info("Process River Data Start: " + RUNTIME_NAME)
     results = {}
     for name in DAMS:
         results = current_river_conditions(name, results)
@@ -198,7 +198,7 @@ def defineLoggers():
     logger.add(  # create a new log file for each run of the program
         "./LOGS/" + RUNTIME_NAME + "_{time}.log",
         retention="10 days",
-        compression="zip",
+        # compression="zip",
         level="DEBUG",  # always send debug output to file
     )
     return
