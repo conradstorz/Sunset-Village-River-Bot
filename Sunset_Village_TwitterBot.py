@@ -235,15 +235,15 @@ def extract_guage_data(dict_data, damname):
             logger.error(f"Did not retrieve correct data from source.")
             guage_reading = None
         else:
-            guage_reading = (damname + date, level_obsrvd, milemrkr, elevate)
+            guage_reading = (damname, date, level_obsrvd, milemrkr, elevate)
     return guage_reading
 
 
 @logger.catch
 def calculate_level(upriver, dnriver):
     """ Calculate river level at point of interest """
-    _upriver_name, upriver_level, upriver_milemrkr, upriver_elevation = upriver
-    _dnriver_name, dnriver_level, dnriver_milemrkr, dnriver_elevation = dnriver
+    _upriver_name, upriver_date, upriver_level, upriver_milemrkr, upriver_elevation = upriver
+    _dnriver_name, dnriver_date, dnriver_level, dnriver_milemrkr, dnriver_elevation = dnriver
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
     elev_diff = (
@@ -266,17 +266,17 @@ def assemble_text(dict_data, forecast_data, db):
     dnriver = extract_guage_data(dict_data, DNRIVERDAM)
     upriver = extract_guage_data(dict_data, UPRIVERDAM)
     projection = calculate_level(upriver, dnriver)
-    upriver_name, upriver_level, _upriver_milemrkr, _upriver_elevation = upriver
-    dnriver_name, dnriver_level, _dnriver_milemrkr, _dnriver_elevation = dnriver
+    upriver_name, upriver_date, upriver_level, _upriver_milemrkr, _upriver_elevation = upriver
+    dnriver_name, dnriver_date, dnriver_level, _dnriver_milemrkr, _dnriver_elevation = dnriver
 
     dnriver_fcst = extract_guage_data(forecast_data, DNRIVERDAM)
     upriver_fcst = extract_guage_data(forecast_data, UPRIVERDAM)
     forecast = calculate_level(upriver_fcst, dnriver_fcst)
 
     # build text of tweet
-    t1 = f"Latest Observation:{upriver_name} {upriver_level}ft."
-    t2 = f" {dnriver_name} {dnriver_level}ft."
-    t3 = f" Calculated Level at Bushmans:{projection:.2f}ft. future:{forecast:.2f}ft."
+    t1 = f"Latest Observation {upriver_level}ft. {upriver_name}{upriver_date} ** "
+    t2 = f"{dnriver_level}ft. {dnriver_name}{dnriver_date} ** "
+    t3 = f"Calculated Level at Bushmans {projection:.2f}ft. ** Future level at {dnriver_fcst[1]} ** {forecast:.2f}ft."
     tweet = f"{t1}{t2}{t3} ::: Data source: NOAA"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
@@ -290,21 +290,28 @@ def assemble_text(dict_data, forecast_data, db):
 def build_tweet(rivr_conditions_dict, db):
     """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
     """
-    tweet = " "
+    tweet = ""
     # TODO put these data gathering functions in seperate functions and return named tuples of results
+    # EDIT: named tuples and dataclasses are flawed. ATTRS library is the way to go.
+    """ import attr
+        @attr.s
+        class Point3D(object):
+            x = attr.ib()
+            y = attr.ib()
+            z = attr.ib()
+    """
     # TODO (damname,observationtype,timestamp,level)
-    # TODO organize data as: currentobservation,highestforecast,eventualforecast)
-    # TODO (option: use a data object to hold values rather than namedtuple)
+    """ import attr
+        @attr.s
+        class obervation_event(object):
+            damname = attr.ib()
+            observation_type = attr.ib()
+            timestamp = attr.ib()
+            river_level = attr.ib()
     """
-    from collections import namedtuple
 
-    Event = namedtuple('DamData', ['DamName', 'ObsvType', 'TimeStamp', 'Level'])
-    Event.__new__.__defaults__ = (None, None, None, None)
-    E1 = Event()
-    E2 = Event('McAlpine', 'Forecast', TimeNow(), '12.98')
-    assert E2.DamName == 'McAlpine'
-    assert E1.DamName == None
-    """
+
+    # TODO organize data as: currentobservation,highestforecast,eventualforecast)
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
         logger.info(f'Searching for tag: {lbl}')
@@ -336,6 +343,32 @@ def QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL):
 
 
 @logger.catch
+def Tweet(twtr, time, db, min_time_between_tweets):    
+    """Create the text of a tweet to be sent.
+    """
+    DisplayMessage("Reading new river level...")
+    logger.info("Getting level data...")
+    data = get_level_data()
+    logger.debug(f"get_level_data={data}")
+    if data == []:
+        logger.error(f"Did not tweet. No tweet generated. No data available.")
+        logger.info(f"Recommend waiting 10 minutes to retry.")
+        return 600 # return a 10 minute waittime for retry
+    logger.info(f"Ready to build tweet from data of type: {type(data)}")
+    logger.debug(f"tweet data: {saferepr(data)}")
+    status = build_tweet(data, db)
+    if len(status) > 0:
+        DisplayMessage("Tweeting...")
+        send_tweet(db, time, status, twtr)
+    else:
+        logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
+        logger.info(f"Recommend waiting 10 minutes to retry.")
+        return 600 # return a 10 minute waittime for retry
+    return min_time_between_tweets
+
+
+
+@logger.catch
 def UpdatePrediction(twtr, time, db):
     """ Returns the time to wait until next tweet and Tweets if enough time has passed
     twtr = twython object for accessing Twitter
@@ -348,38 +381,20 @@ def UpdatePrediction(twtr, time, db):
     logger.info(f"Most recent level: {latest_level}")
     priority = QuantifyFlooding(latest_level, MINIMUM_CONCERN_LEVEL)
     logger.info(f"Priority: {priority}")
-    MINIMUM_TIME_BETWEEN_TWEETS = TWEET_FREQUENCY[priority]
-    logger.info(f"Time between Tweets: {MINIMUM_TIME_BETWEEN_TWEETS}")
+    min_time_between_tweets = TWEET_FREQUENCY[priority]
+    logger.info(f"Time between Tweets: {min_time_between_tweets}")
     # check time against minimum tweet time
     logger.info(f"Time now: {time}")
     logger.info(f"Previous Tweet time: {prevTweet}")
     elapsed = time - prevTweet  # returns a timedelta object
     logger.info(f"Time since last Tweet: {elapsed}")
     logger.info(f"Total number of seconds elapsed: {elapsed.total_seconds()}")
-    if elapsed.total_seconds() >= MINIMUM_TIME_BETWEEN_TWEETS:
+    if elapsed.total_seconds() >= min_time_between_tweets:
         logger.info("Tweeting...")
-        DisplayMessage("Reading new river level...")
-        waitTime = MINIMUM_TIME_BETWEEN_TWEETS
-        logger.info("Getting level data...")
-        data = get_level_data()
-        logger.debug(f"get_level_data={data}")
-        if data == []:
-            logger.error(f"Did not tweet. No tweet generated. No data available.")
-            logger.info(f"Recommend waiting 10 minutes to retry.")
-            return (600, latest_level) # return a 10 minute waittime for retry
-        logger.info(f"Ready to build tweet from data of type: {type(data)}")
-        logger.debug(f"tweet data: {saferepr(data)}")
-        status = build_tweet(data, db)
-        if len(status) > 0:
-            DisplayMessage("Tweeting...")
-            send_tweet(db, time, status, twtr)
-        else:
-            logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
-            logger.info(f"Recommend waiting 10 minutes to retry.")
-            return (600, latest_level) # return a 10 minute waittime for retry
+        waitTime = Tweet(twtr, time, db, min_time_between_tweets)
     else:
         logger.info("Too soon to tweet.")
-        waitTime = MINIMUM_TIME_BETWEEN_TWEETS - elapsed.seconds
+        waitTime = min_time_between_tweets - elapsed.seconds
         logger.info(f"Recommend waiting {waitTime} seconds.")
     latest_level = db.get(PupDB_MRLkey)  # recover recent level
     return (waitTime, latest_level)
@@ -465,8 +480,12 @@ def Main(credentials):
         logger.info(f"New wait time: {wait}")
         logger.info(f"New Level: {new_level}")
         logger.info(f"Trend: {trend}")
+        paused_at = wait
         while wait > 0:
             wait=AreWeThereYet(wait,new_level,trend)
+            if paused_at - wait >= 3000:  # update console each 3000 seconds.
+                paused_at = wait
+                logger.info(f"{wait} seconds remaning to wait.")
     return
 
 
