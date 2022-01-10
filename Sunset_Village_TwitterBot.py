@@ -11,7 +11,7 @@ import time
 import zoneinfo
 Zone_NYC = zoneinfo.ZoneInfo("America/New_York")
 from datetime import datetime
-# from datetime import timedelta
+from datetime import timedelta
 from dateutil import parser
 
 # from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
@@ -276,7 +276,7 @@ def assemble_text(dict_data, forecast_data, db):
     # build text of tweet
     t1 = f"Latest Observation {upriver_level}ft. {upriver_name}{upriver_date} ** "
     t2 = f"{dnriver_level}ft. {dnriver_name}{dnriver_date} ** "
-    t3 = f"Calculated Level at Bushmans {projection:.2f}ft. ** Future level at {dnriver_fcst[1]} ** {forecast:.2f}ft."
+    t3 = f"Calculated Level at Bushmans {projection:.2f}ft. ** Future level {forecast:.2f}ft. at {dnriver_fcst[1]} **"
     tweet = f"{t1}{t2}{t3} ::: Data source: NOAA"
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
@@ -473,19 +473,15 @@ def Main(credentials):
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
-        # TODO remove tweet functions from prediction function
         wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
         forecast_level = storage_db.get(PupDB_MRFkey)
         trend = DetermineTrend(new_level, forecast_level)
         logger.info(f"New wait time: {wait}")
         logger.info(f"New Level: {new_level}")
         logger.info(f"Trend: {trend}")
-        paused_at = wait
-        while wait > 0:
-            wait=AreWeThereYet(wait,new_level,trend)
-            if paused_at - wait >= 3000:  # update console each 3000 seconds.
-                paused_at = wait
-                logger.info(f"{wait} seconds remaning to wait.")
+        logger.info(f"Next tweet at {TimeNow + timedelta(0, wait)}")
+        time.sleep(wait)
+        datetime
     return
 
 
