@@ -32,15 +32,15 @@ try:
 except ImportError as e:
     SenseHatLoaded = False
 
-PupDB_FILENAME = "SVTB-DB.json_db"
-PupDB_MRTkey = "MostRecentTweet"
-PupDB_MRLkey = "MostRecentRiverLevel"
-PupDB_MRFkey = "MostRecentForecastLevel"
-PupDB_ACTIONkey = "CurrentFloodingActionLevel"
-HIGHEST_TAG = "Highest  Observation:"
-LATEST_TAG = "Latest  observed"
-FORECAST_TAG = "Highest  Forecast:"
-OBSERVATION_TAGS = [LATEST_TAG, HIGHEST_TAG, FORECAST_TAG]
+PUPDB_FILENAME = "SVTB-DB.json_db"
+PUPDB_MRT_KEY = "MostRecentTweet"
+PUPDB_MRL_KEY = "MostRecentRiverLevel"
+PUPDB_MRF_KEY = "MostRecentForecastLevel"
+PUPDB_ACTION_KEY = "CurrentFloodingActionLevel"
+HIGHEST_OBSERVATION_TAG = "Highest  Observation:"
+LATEST_OBSERVATION_TAG = "Latest  observed"
+NOAA_FORECAST_TAG = "Highest  Forecast:"
+OBSERVATION_TAGS = [LATEST_OBSERVATION_TAG, HIGHEST_OBSERVATION_TAG, NOAA_FORECAST_TAG]
 
 ACTION_LABELS = [
     "No Flooding",
@@ -116,7 +116,7 @@ def send_tweet(db, time, tweet, twttr):
     Place tweet and update filesystem storage to reflect activities.
     """
     # place tweet time into longterm storage
-    db.set(PupDB_MRTkey, str(time))
+    db.set(PUPDB_MRT_KEY, str(time))
     # place tweet into longterm storage. Keep ALL tweets keyed on timestamp
     tweetKey = f"Tweet@{time}"
     db.set(tweetKey, tweet)
@@ -159,7 +159,7 @@ def extract_data(cleaned_map_data, lbl_str):
     """
     # scan dictionary for specified observations
     observations = {}
-    logger.info(f"{cleaned_map_data=}")
+    logger.debug(f"{cleaned_map_data=}")
     logger.info(f"Looking for: {lbl_str}")
     for key in cleaned_map_data.keys():
         logger.debug(f"Map Data Key: {key}")
@@ -188,7 +188,7 @@ def extract_forecast(obsv_data):
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
         logger.debug(obsv_data[line])
-        if obsv_data[line][0] == FORECAST_TAG:
+        if obsv_data[line][0] == NOAA_FORECAST_TAG:
             logger.debug("Highest Forecast line:")
             damname = obsv_data[line][-3]
             if damname not in observations.keys():
@@ -212,7 +212,7 @@ def extract_latest(obsv_data):
     for line in obsv_data.keys():
         logger.debug(f"Observation Key: {line}")
         logger.debug(obsv_data[line])
-        if obsv_data[line][0] == LATEST_TAG:
+        if obsv_data[line][0] == LATEST_OBSERVATION_TAG:
             logger.debug("Latest Forecast line:")
             damname = obsv_data[line][-3]
             if damname not in observations.keys():
@@ -259,18 +259,19 @@ def calculate_level(upriver, dnriver):
 
 
 @logger.catch
-def assemble_text(dict_data, forecast_data, db):
-    """ extract guage readings from dict and calculate river slope.
+def assemble_text(latest_readings_dict, forecast_data_dict, storage_db):
+    """ extract guage readings from dicts and calculate river slope.
     build tweet text from results.
     """
-    dnriver = extract_guage_data(dict_data, DNRIVERDAM)
-    upriver = extract_guage_data(dict_data, UPRIVERDAM)
+    dnriver = extract_guage_data(latest_readings_dict, DNRIVERDAM)
+    upriver = extract_guage_data(latest_readings_dict, UPRIVERDAM)
     projection = calculate_level(upriver, dnriver)
+
     upriver_name, upriver_date, upriver_level, _upriver_milemrkr, _upriver_elevation = upriver
     dnriver_name, dnriver_date, dnriver_level, _dnriver_milemrkr, _dnriver_elevation = dnriver
 
-    dnriver_fcst = extract_guage_data(forecast_data, DNRIVERDAM)
-    upriver_fcst = extract_guage_data(forecast_data, UPRIVERDAM)
+    dnriver_fcst = extract_guage_data(forecast_data_dict, DNRIVERDAM)
+    upriver_fcst = extract_guage_data(forecast_data_dict, UPRIVERDAM)
     forecast = calculate_level(upriver_fcst, dnriver_fcst)
 
     # build text of tweet
@@ -281,8 +282,8 @@ def assemble_text(dict_data, forecast_data, db):
     logger.info(tweet)
     logger.info(f"Length of Tweet {len(tweet)} characters.")
     # place this river level projection into longterm storage database
-    db.set(PupDB_MRLkey, projection)
-    db.set(PupDB_MRFkey, forecast)
+    storage_db.set(PUPDB_MRL_KEY, projection)
+    storage_db.set(PUPDB_MRF_KEY, forecast)
     return tweet
 
 
@@ -375,9 +376,9 @@ def UpdatePrediction(twtr, time, db):
     tm = datetime obj representing current time
     db = PupDB obj for persistant storage on local machine
     """
-    last_tweet_time = db.get(PupDB_MRTkey)  # recover string repr of datetime obj
+    last_tweet_time = db.get(PUPDB_MRT_KEY)  # recover string repr of datetime obj
     prevTweet = parser.parse(last_tweet_time)  # convert back to datetime
-    latest_level = db.get(PupDB_MRLkey)  # recover recent level
+    latest_level = db.get(PUPDB_MRL_KEY)  # recover recent level
     logger.info(f"Most recent level: {latest_level}")
     priority = QuantifyFlooding(latest_level, MINIMUM_CONCERN_LEVEL)
     logger.info(f"Priority: {priority}")
@@ -396,7 +397,7 @@ def UpdatePrediction(twtr, time, db):
         logger.info("Too soon to tweet.")
         waitTime = min_time_between_tweets - elapsed.seconds
         logger.info(f"Recommend waiting {waitTime} seconds.")
-    latest_level = db.get(PupDB_MRLkey)  # recover recent level
+    latest_level = db.get(PUPDB_MRL_KEY)  # recover recent level
     return (waitTime, latest_level)
 
 
@@ -447,15 +448,15 @@ def AreWeThereYet(wait,new_level,trend):
 def ActivateDatabase(PupDB_FILENAME, TimeNow):
     # TODO place db functions into its own function
     storage_db = PupDB(PupDB_FILENAME)
-    last_tweet = storage_db.get(PupDB_MRTkey)
-    last_level = storage_db.get(PupDB_MRLkey)
+    last_tweet = storage_db.get(PUPDB_MRT_KEY)
+    last_level = storage_db.get(PUPDB_MRL_KEY)
     if last_tweet is None:    # Pre-load empty database
         last_tweet = str(TimeNow)
         last_level = MINIMUM_CONCERN_LEVEL
-        storage_db.set(PupDB_MRTkey, last_tweet)
-        storage_db.set(PupDB_MRLkey, last_level)
+        storage_db.set(PUPDB_MRT_KEY, last_tweet)
+        storage_db.set(PUPDB_MRL_KEY, last_level)
         forecast_level = last_level
-        storage_db.set(PupDB_MRFkey, forecast_level)
+        storage_db.set(PUPDB_MRF_KEY, forecast_level)
     return storage_db
 
 
@@ -469,19 +470,18 @@ def Main(credentials):
     twitter = Twython(a, b, c, d)
     # activate PupDB file for persistent storage
     TimeNow = datetime.now()
-    storage_db = ActivateDatabase(PupDB_FILENAME, TimeNow)
+    storage_db = ActivateDatabase(PUPDB_FILENAME, TimeNow)
     # initialization complete. Begin main loop.
     while True:
         TimeNow = datetime.now()
         wait, new_level = UpdatePrediction(twitter, TimeNow, storage_db)
-        forecast_level = storage_db.get(PupDB_MRFkey)
+        forecast_level = storage_db.get(PUPDB_MRF_KEY)
         trend = DetermineTrend(new_level, forecast_level)
         logger.info(f"New wait time: {wait}")
         logger.info(f"New Level: {new_level}")
         logger.info(f"Trend: {trend}")
         logger.info(f"Next tweet at {TimeNow + timedelta(0, wait)}")
         time.sleep(wait)
-        datetime
     return
 
 
