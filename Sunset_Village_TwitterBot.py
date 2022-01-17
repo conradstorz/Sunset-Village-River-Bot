@@ -480,8 +480,14 @@ def Main(credentials):
         logger.info(f"New wait time: {wait}")
         logger.info(f"New Level: {new_level}")
         logger.info(f"Trend: {trend}")
-        logger.info(f"Next tweet at {TimeNow + timedelta(0, wait)}")
-        time.sleep(wait)
+        nextTweet = TimeNow + timedelta(0, wait)
+        logger.info(f"Next tweet at {nextTweet}")
+        while wait > 1:
+            wait = wait - 55
+            time.sleep(55)
+            if datetime.now() > nextTweet:
+                logger.info(f"{wait} seconds left but tweet time has passed.")
+                wait = 0
     return
 
 
