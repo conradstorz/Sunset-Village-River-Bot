@@ -10,8 +10,8 @@ from loguru import logger
 LOGGING_LEVEL = "INFO"
 
 from os import sys, path
-from datetime import datetime, timezone
-from dateutil import parser as dateparser
+from datetime import datetime# , timezone
+#from dateutil import parser as dateparser
 from dateparser.search import search_dates
 from pprint import saferepr
 import cfsiv_utils.WebScraping as ws
