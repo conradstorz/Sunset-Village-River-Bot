@@ -9,6 +9,7 @@ from pprint import saferepr
 import sys
 import time
 import zoneinfo
+
 Zone_NYC = zoneinfo.ZoneInfo("America/New_York")
 from datetime import datetime
 from datetime import timedelta
@@ -16,6 +17,7 @@ from dateutil import parser
 
 # from NWS_River_Data_scrape import calculated_Bushmans_river_level as get_level
 from NWS_River_Data_scrape_NEW import processRiverData as get_level_data
+
 # from NWS_River_Data_scrape_NEW import RIVER_MONITORING_POINTS
 from NWS_River_Data_scrape_NEW import MCALPINE_DAM_NAME as DNRIVERDAM
 from NWS_River_Data_scrape_NEW import MARKLAND_DAM_NAME as UPRIVERDAM
@@ -69,13 +71,14 @@ LOCATION_OF_INTEREST = 584  # river mile marker @ Bushman's Lake
 
 from twython import Twython, TwythonError
 from dotenv import dotenv_values
+
 TwitterCredentials = dotenv_values(".env")
 TWITTER_CREDENTIALS = (
-    TwitterCredentials["APP_KEY"], 
-    TwitterCredentials["APP_SECRET"], 
-    TwitterCredentials["OAUTH_TOKEN"], 
+    TwitterCredentials["APP_KEY"],
+    TwitterCredentials["APP_SECRET"],
+    TwitterCredentials["OAUTH_TOKEN"],
     TwitterCredentials["OAUTH_TOKEN_SECRET"],
-    )
+)
 
 
 from os import sys, path
@@ -112,7 +115,7 @@ def test_tweet(db):
 
 @logger.catch
 def send_tweet(db, time, tweet, twttr):
-    """Accept a database object, datetime object, a tweet string and a Twython object. 
+    """Accept a database object, datetime object, a tweet string and a Twython object.
     Place tweet and update filesystem storage to reflect activities.
     """
     # place tweet time into longterm storage
@@ -135,7 +138,7 @@ def send_tweet(db, time, tweet, twttr):
 
 @logger.catch
 def sanitize(itm):
-    """ Accept argument as a list of NOAA details. 
+    """Accept argument as a list of NOAA details.
     Observations from NOAA have a format discrepacy between 'Latest' entries
     and all other forms of entry. This function looks for those entries and
     'Standardizes' them.
@@ -153,7 +156,7 @@ def sanitize(itm):
 
 @logger.catch
 def extract_data(cleaned_map_data, lbl_str):
-    """ take the 'map' data dict and extract entries matching supplied label.
+    """take the 'map' data dict and extract entries matching supplied label.
     We know the 'map' contains entries of observations and forecasts. Each entry
     has the name of the dam as the last item three from the end of the line.
     """
@@ -165,7 +168,7 @@ def extract_data(cleaned_map_data, lbl_str):
         logger.debug(f"Map Data Key: {key}")
         data = cleaned_map_data[key][0]
         logger.debug(f"Map Data: {data}")
-        if  data == lbl_str:
+        if data == lbl_str:
             logger.debug(f"Observation Tag: {data}")
             obsrv = sanitize(cleaned_map_data[key])
             observations[key] = obsrv
@@ -177,7 +180,7 @@ def extract_data(cleaned_map_data, lbl_str):
 
 @logger.catch
 def extract_forecast(obsv_data):
-    """ take the 'obsv' data dict and extract entries matching forecast predictions.
+    """take the 'obsv' data dict and extract entries matching forecast predictions.
     We know the 'obsv' contains entries of observations and forecasts. Each entry
     has the name of the dam as the last item three from the end of the line.
     We want one prediction for each dam.
@@ -201,7 +204,7 @@ def extract_forecast(obsv_data):
 
 @logger.catch
 def extract_latest(obsv_data):
-    """ take the 'obsv' data dict and extract entries matching latest predictions.
+    """take the 'obsv' data dict and extract entries matching latest predictions.
     We know the 'obsv' contains entries of observations and forecasts. Each entry
     has the name of the dam as the last item three from the end of the line.
     We want one observation of the latest level for each dam.
@@ -241,9 +244,21 @@ def extract_guage_data(dict_data, damname):
 
 @logger.catch
 def calculate_level(upriver, dnriver):
-    """ Calculate river level at point of interest """
-    _upriver_name, upriver_date, upriver_level, upriver_milemrkr, upriver_elevation = upriver
-    _dnriver_name, dnriver_date, dnriver_level, dnriver_milemrkr, dnriver_elevation = dnriver
+    """Calculate river level at point of interest"""
+    (
+        _upriver_name,
+        upriver_date,
+        upriver_level,
+        upriver_milemrkr,
+        upriver_elevation,
+    ) = upriver
+    (
+        _dnriver_name,
+        dnriver_date,
+        dnriver_level,
+        dnriver_milemrkr,
+        dnriver_elevation,
+    ) = dnriver
     # calculate bushmans level based on latest observation
     slope = upriver_level - dnriver_level
     elev_diff = (
@@ -260,15 +275,27 @@ def calculate_level(upriver, dnriver):
 
 @logger.catch
 def assemble_text(latest_readings_dict, forecast_data_dict, storage_db):
-    """ extract guage readings from dicts and calculate river slope.
+    """extract guage readings from dicts and calculate river slope.
     build tweet text from results.
     """
     dnriver = extract_guage_data(latest_readings_dict, DNRIVERDAM)
     upriver = extract_guage_data(latest_readings_dict, UPRIVERDAM)
     projection = calculate_level(upriver, dnriver)
 
-    upriver_name, upriver_date, upriver_level, _upriver_milemrkr, _upriver_elevation = upriver
-    dnriver_name, dnriver_date, dnriver_level, _dnriver_milemrkr, _dnriver_elevation = dnriver
+    (
+        upriver_name,
+        upriver_date,
+        upriver_level,
+        _upriver_milemrkr,
+        _upriver_elevation,
+    ) = upriver
+    (
+        dnriver_name,
+        dnriver_date,
+        dnriver_level,
+        _dnriver_milemrkr,
+        _dnriver_elevation,
+    ) = dnriver
 
     dnriver_fcst = extract_guage_data(forecast_data_dict, DNRIVERDAM)
     upriver_fcst = extract_guage_data(forecast_data_dict, UPRIVERDAM)
@@ -289,8 +316,7 @@ def assemble_text(latest_readings_dict, forecast_data_dict, storage_db):
 
 @logger.catch
 def build_tweet(rivr_conditions_dict, db):
-    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet.
-    """
+    """takes a dictionary of river condition observations from 2 dams and builds data into a tweet."""
     tweet = ""
     # TODO put these data gathering functions in seperate functions and return named tuples of results
     # EDIT: named tuples and dataclasses are flawed. ATTRS library is the way to go.
@@ -311,11 +337,10 @@ def build_tweet(rivr_conditions_dict, db):
             river_level = attr.ib()
     """
 
-
     # TODO organize data as: currentobservation,highestforecast,eventualforecast)
     obsv_dict = {}
     for lbl in OBSERVATION_TAGS:
-        logger.info(f'Searching for tag: {lbl}')
+        logger.info(f"Searching for tag: {lbl}")
         logger.info(f"{rivr_conditions_dict=}")
         current_observations = extract_data(rivr_conditions_dict, lbl)
         logger.info(f"{current_observations=}")
@@ -344,9 +369,8 @@ def QuantifyFlooding(MOST_RECENT_LEVEL, MINIMUM_CONCERN_LEVEL):
 
 
 @logger.catch
-def Tweet(twtr, time, db, min_time_between_tweets):    
-    """Create the text of a tweet to be sent.
-    """
+def Tweet(twtr, time, db, min_time_between_tweets):
+    """Create the text of a tweet to be sent."""
     DisplayMessage("Reading new river level...")
     logger.info("Getting level data...")
     data = get_level_data()
@@ -354,7 +378,7 @@ def Tweet(twtr, time, db, min_time_between_tweets):
     if data == []:
         logger.error(f"Did not tweet. No tweet generated. No data available.")
         logger.info(f"Recommend waiting 10 minutes to retry.")
-        return 600 # return a 10 minute waittime for retry
+        return 600  # return a 10 minute waittime for retry
     logger.info(f"Ready to build tweet from data of type: {type(data)}")
     logger.debug(f"tweet data: {saferepr(data)}")
     status = build_tweet(data, db)
@@ -364,14 +388,13 @@ def Tweet(twtr, time, db, min_time_between_tweets):
     else:
         logger.error(f"Did not tweet. No tweet generated. Unknown reason.")
         logger.info(f"Recommend waiting 10 minutes to retry.")
-        return 600 # return a 10 minute waittime for retry
+        return 600  # return a 10 minute waittime for retry
     return min_time_between_tweets
-
 
 
 @logger.catch
 def UpdatePrediction(twtr, time, db):
-    """ Returns the time to wait until next tweet and Tweets if enough time has passed
+    """Returns the time to wait until next tweet and Tweets if enough time has passed
     twtr = twython object for accessing Twitter
     tm = datetime obj representing current time
     db = PupDB obj for persistant storage on local machine
@@ -413,9 +436,10 @@ def DisplayMessage(message):
         random_to_solid(SENSEHAT, colorName=lastColor, fast=True)
     return True
 
+
 @logger.catch
 def DetermineTrend(now, soon):
-    """ returns text describing if the trend of the river is rising or falling.
+    """returns text describing if the trend of the river is rising or falling.
     now = float value of current level of river
     soon = float value of future level of river
     """
@@ -425,9 +449,10 @@ def DetermineTrend(now, soon):
         return "Rising"
     return "Flat"
 
+
 @logger.catch
-def AreWeThereYet(wait,new_level,trend):
-    """ returns how much longer to wait until next report should be generated.
+def AreWeThereYet(wait, new_level, trend):
+    """returns how much longer to wait until next report should be generated.
     wait = int: number of seconds to wait
     This function updates any attached displays and then returns a new wait time.
     """
@@ -450,7 +475,7 @@ def ActivateDatabase(PupDB_FILENAME, TimeNow):
     storage_db = PupDB(PupDB_FILENAME)
     last_tweet = storage_db.get(PUPDB_MRT_KEY)
     last_level = storage_db.get(PUPDB_MRL_KEY)
-    if last_tweet is None:    # Pre-load empty database
+    if last_tweet is None:  # Pre-load empty database
         last_tweet = str(TimeNow)
         last_level = MINIMUM_CONCERN_LEVEL
         storage_db.set(PUPDB_MRT_KEY, last_tweet)
