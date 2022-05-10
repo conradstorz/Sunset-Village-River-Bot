@@ -43,9 +43,13 @@ def use_threadpools(urls_list):
             else:
                 print('%r page is %d bytes' % (url, len(data)))
 
-
-print(time.time())
+start = time.time()
+print(start)
 use_no_threads(URLS)
-print(time.time())
+timeofnothreads = time.time()
+print(timeofnothreads)
 use_threadpools(URLS)
-print(time.time())
+endofthreadpool = time.time()
+print(endofthreadpool)
+print()
+print(f'Time to completion: {timeofnothreads - start:.1f} without threads and {endofthreadpool - timeofnothreads:.1f} with threads.')
