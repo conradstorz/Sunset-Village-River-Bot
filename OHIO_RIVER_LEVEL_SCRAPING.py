@@ -149,6 +149,9 @@ def get_NWS_web_data(site, cache=False):
     If CACHE then place the cleaned HTML into local storage for later processing by other code.
     """
     clean_soup = ws.retrieve_cleaned_html(site, cache)
+    if clean_soup == None:
+        logger.debug(f'Error retreiving web data for: {site}')
+        return None
     return pull_details(clean_soup)
 
 
@@ -215,24 +218,29 @@ def Main():
     for point in USGS_URLS:
         logger.debug(f'Scraping point: {point}')
         time_now_string = ts.UTC_NOW_STRING()
-        raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
-        # TODO verify webscraping success
-        # DONE, store raw_data for ability to work on dates problem over the newyear transition.
-        # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
-        # NOTE: cache=True above is used to make a local copy in the CWD of the original HTML scrape.
-        data_list = sort_and_label_data(raw_data, guage_id, friendly_name, scrape_date)
-        # TODO verify successful conversion of data
-        for item in tqdm(data_list, desc=friendly_name):
-            logger.debug(item)
-            date, time = time_now_string.split("_")  # split date from time
-            yy, mm, dd = date.split("-")
-            OP = f"{yy}/{mm}/{dd}/"
-            OD = f"{OUTPUT_ROOT}{OP}"
-            FN = f"{time_now_string}"
-            fh.write_csv([item], filename=FN, directory=OD)
-        sleep(1)  # guarantee next point of interest gets a new timestamp.
-        # some scrapes process in under 1 second and result in data collision.
-        logger.info(time_now_string)
+        webdata = get_NWS_web_data(point, cache=True)       
+        if webdata != None: 
+            raw_data, guage_id, friendly_name, scrape_date = webdata
+            # TODO verify webscraping success
+            # DONE, store raw_data for ability to work on dates problem over the newyear transition.
+            # It will be helpfull to have 12/28 to  January 4 scrapes for repeated test processing.
+            # NOTE: cache=True above is used to make a local copy in the CWD of the original HTML scrape.
+            data_list = sort_and_label_data(raw_data, guage_id, friendly_name, scrape_date)
+            # TODO verify successful conversion of data
+            for item in tqdm(data_list, desc=friendly_name):
+                logger.debug(item)
+                date, time = time_now_string.split("_")  # split date from time
+                yy, mm, dd = date.split("-")
+                OP = f"{yy}/{mm}/{dd}/"
+                OD = f"{OUTPUT_ROOT}{OP}"
+                FN = f"{time_now_string}"
+                fh.write_csv([item], filename=FN, directory=OD)
+            sleep(1)  # guarantee next point of interest gets a new timestamp.
+            # some scrapes process in under 1 second and result in data collision.
+            logger.info(time_now_string)
+        else:
+            logger.debug(f'Error while scraping point: {point}')
+            logger.debug(f'No data collected for: {point}')
     return True
 
 
