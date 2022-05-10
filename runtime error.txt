@@ -1,0 +1,208 @@
+Ohio River At Cincinnati (CCNO1): 100%|██████████████████████████████████████████████████████████████████████| 904/904 [00:04<00:00, 198.28it/s]
+Error during requests to https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]=xml : HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by SSLError(SSLError(1, '[SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)')))
+2022-05-03 04:45:13.042 | ERROR    | cfsiv_utils.WebScraping:retrieve_cleaned_html:81 - An error has been caught in function 'retrieve_cleaned_html', process 'MainProcess' (6536), thread 'MainThread' (8136):
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 699, in urlopen        
+    httplib_response = self._make_request(
+                       │    └ <function HTTPConnectionPool._make_request at 0x000002337FCA0160>
+                       └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x00000233086AC580>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 382, in _make_request  
+    self._validate_conn(conn)
+    │    │              └ <urllib3.connection.HTTPSConnection object at 0x0000023308AAB520>
+    │    └ <function HTTPSConnectionPool._validate_conn at 0x000002337FCA0670>
+    └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x00000233086AC580>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 1010, in _validate_conn
+    conn.connect()
+    │    └ <function HTTPSConnection.connect at 0x000002337FC775E0>
+    └ <urllib3.connection.HTTPSConnection object at 0x0000023308AAB520>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connection.py", line 411, in connect
+    self.sock = ssl_wrap_socket(
+    │    │      └ <function ssl_wrap_socket at 0x000002337FC715E0>
+    │    └ None
+    └ <urllib3.connection.HTTPSConnection object at 0x0000023308AAB520>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\ssl_.py", line 428, in ssl_wrap_socket     
+    ssl_sock = _ssl_wrap_socket_impl(
+               └ <function _ssl_wrap_socket_impl at 0x000002337FC71790>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\ssl_.py", line 472, in _ssl_wrap_socket_impl
+    return ssl_context.wrap_socket(sock, server_hostname=server_hostname)
+           │           │           │                     └ 'water.weather.gov'
+           │           │           └ <socket.socket [closed] fd=-1, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0>
+           │           └ <function SSLContext.wrap_socket at 0x000002337F9E9EE0>
+           └ <ssl.SSLContext object at 0x0000023308D0A4C0>
+
+  File "D:\Program Files\Python39\lib\ssl.py", line 500, in wrap_socket
+    return self.sslsocket_class._create(
+           │    │               └ <classmethod object at 0x000002337F29FCD0>
+           │    └ <class 'ssl.SSLSocket'>
+           └ <ssl.SSLContext object at 0x0000023308D0A4C0>
+
+  File "D:\Program Files\Python39\lib\ssl.py", line 1040, in _create
+    self.do_handshake()
+    │    └ <function SSLSocket.do_handshake at 0x000002337FA23DC0>
+    └ <ssl.SSLSocket [closed] fd=-1, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0>
+
+  File "D:\Program Files\Python39\lib\ssl.py", line 1309, in do_handshake
+    self._sslobj.do_handshake()
+    │    └ None
+    └ <ssl.SSLSocket [closed] fd=-1, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0>
+
+ssl.SSLError: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\adapters.py", line 439, in send
+    resp = conn.urlopen(
+           │    └ <function HTTPConnectionPool.urlopen at 0x000002337FCA03A0>
+           └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x00000233086AC580>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 755, in urlopen        
+    retries = retries.increment(
+              │       └ <function Retry.increment at 0x000002337FC52550>
+              └ Retry(total=0, connect=None, read=False, redirect=None, status=None)
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\retry.py", line 573, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+          │             │      │    │        │             └ 'unknown'
+          │             │      │    │        └ <class 'urllib3.exceptions.ResponseError'>
+          │             │      │    └ SSLError(SSLError(1, '[SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)'))        
+          │             │      └ '//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml'
+          │             └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x00000233086AC580>
+          └ <class 'urllib3.exceptions.MaxRetryError'>
+
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by SSLError(SSLError(1, '[SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)')))
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 27, in simple_get     
+    with closing(get(url, stream=True)) as resp:
+         │       │   └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+         │       └ <function get at 0x000002337FDBBF70>
+         └ <class 'contextlib.closing'>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+           │              │           │         └ {'stream': True, 'allow_redirects': True}
+           │              │           └ None
+           │              └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+           └ <function request at 0x000002337FD7FB80>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+           │       │              │           │      └ {'params': None, 'stream': True, 'allow_redirects': True}
+           │       │              │           └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+           │       │              └ 'get'
+           │       └ <function Session.request at 0x000002337FDBB700>
+           └ <requests.sessions.Session object at 0x0000023309D10C10>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+           │    │    │       └ {'timeout': None, 'allow_redirects': True, 'verify': True, 'proxies': OrderedDict(), 'stream': True, 'cert': None}
+           │    │    └ <PreparedRequest [GET]>
+           │    └ <function Session.send at 0x000002337FDBBB80>
+           └ <requests.sessions.Session object at 0x0000023309D10C10>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+        │       │    │          └ {'timeout': None, 'verify': True, 'proxies': OrderedDict(), 'stream': True, 'cert': None}
+        │       │    └ <PreparedRequest [GET]>
+        │       └ <function HTTPAdapter.send at 0x000002337FDBB040>
+        └ <requests.adapters.HTTPAdapter object at 0x00000233099DDA00>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\adapters.py", line 514, in send
+    raise SSLError(e, request=request)
+          │                   └ <PreparedRequest [GET]>
+          └ <class 'requests.exceptions.SSLError'>
+
+requests.exceptions.SSLError: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by SSLError(SSLError(1, '[SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)')))
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 367, in <module>
+    Main()
+    └ <function Main at 0x000002337FDEC040>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 218, in Main
+    raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
+    │         │         │                            │                └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+    │         │         │                            └ <function get_NWS_web_data at 0x000002337FDE85E0>
+    │         │         └ 'Ohio River At Cincinnati (CCNO1)'
+    │         └ 'ccno1'
+    └ [<h4 style="text-align:center;">Observed and Forecast Stages</h4>, <div class="box_rectangle"><div class="data_name">Observed...
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 151, in get_NWS_web_data
+    clean_soup = ws.retrieve_cleaned_html(site, cache)
+                 │  │                     │     └ True
+                 │  │                     └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+                 │  └ <function retrieve_cleaned_html at 0x000002337FDBC8B0>
+                 └ <module 'cfsiv_utils.WebScraping' from 'D:\\Users\\Conrad\\Documents\\GitHub\\Sunset-Village-River-Bot\\venv\\lib\\site-packa...
+
+> File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 81, in retrieve_cleaned_html
+    raw_resp = simple_get(url)
+               │          └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+               └ <function simple_get at 0x000002337FDDFAF0>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 35, in simple_get     
+    raise Warning(f'{str(e)}')
+
+Warning: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=144523&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by SSLError(SSLError(1, '[SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1122)')))
+2022-05-03 04:45:13.205 | ERROR    | __main__:get_NWS_web_data:152 - An error has been caught in function 'get_NWS_web_data', process 'MainProcess' (6536), thread 'MainThread' (8136):
+Traceback (most recent call last):
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 367, in <module>
+    Main()
+    └ <function Main at 0x000002337FDEC040>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 218, in Main
+    raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
+    │         │         │                            │                └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+    │         │         │                            └ <function get_NWS_web_data at 0x000002337FDE85E0>
+    │         │         └ 'Ohio River At Cincinnati (CCNO1)'
+    │         └ 'ccno1'
+    └ [<h4 style="text-align:center;">Observed and Forecast Stages</h4>, <div class="box_rectangle"><div class="data_name">Observed...
+
+> File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 152, in get_NWS_web_data
+    return pull_details(clean_soup)
+           │            └ None
+           └ <function pull_details at 0x000002337FDE8280>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 128, in pull_details
+    guage_id = soup.h1["id"]
+               └ None
+
+AttributeError: 'NoneType' object has no attribute 'h1'
+2022-05-03 04:45:13.264 | ERROR    | __main__:<module>:367 - An error has been caught in function '<module>', process 'MainProcess' (6536), thread 'MainThread' (8136):
+Traceback (most recent call last):
+
+> File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 367, in <module>
+    Main()
+    └ <function Main at 0x000002337FDEC040>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 218, in Main
+    raw_data, guage_id, friendly_name, scrape_date = get_NWS_web_data(point, cache=True)
+    │         │         │                            │                └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=144523&allpoints=150960&data[]=obs&data[]...
+    │         │         │                            └ <function get_NWS_web_data at 0x000002337FDE85E0>
+    │         │         └ 'Ohio River At Cincinnati (CCNO1)'
+    │         └ 'ccno1'
+    └ [<h4 style="text-align:center;">Observed and Forecast Stages</h4>, <div class="box_rectangle"><div class="data_name">Observed...
+
+TypeError: cannot unpack non-iterable NoneType object
+Sleeping...
+ 8973
