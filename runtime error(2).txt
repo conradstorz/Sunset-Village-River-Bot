@@ -1,0 +1,165 @@
+2022-08-02 07:10:29.431 | DEBUG    | __main__:Main:231 - {'guage': 'olti2', 'type': 'Observed', 'datetime': '2022-07-24_00:00:00UTC', 'level': '19.28 ft', 'flow': '-999 kcfs'}
+2022-08-02 07:10:29.431 | DEBUG    | cfsiv_utils.filehandling:check_and_validate_fname:239 - target directory must be a valid Path, got <class 'pathlib.WindowsPath'>
+2022-08-02 07:10:30.464 | INFO     | __main__:Main:240 - 2022-08-02_11:10:22UTC
+2022-08-02 07:10:30.464 | DEBUG    | __main__:Main:219 - Scraping point: https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]=xml
+2022-08-02 07:10:51.591 | ERROR    | cfsiv_utils.WebScraping:retrieve_cleaned_html:81 - An error has been caught in function 'retrieve_cleaned_html', process 'MainProcess' (11644), thread 'MainThread' (13568):
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connection.py", line 169, in _new_conn
+    conn = connection.create_connection(
+           │          └ <function create_connection at 0x0000026A8AEBFE50>
+           └ <module 'urllib3.util.connection' from 'D:\\Users\\Conrad\\Documents\\GitHub\\Sunset-Village-River-Bot\\venv\\lib\\site-packa...
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\connection.py", line 96, in create_connection
+    raise err
+          └ TimeoutError(10060, 'A connection attempt failed because the connected party did not properly respond after a period of time,...
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\connection.py", line 86, in create_connection
+    sock.connect(sa)
+    │            └ ('23.62.164.14', 443)
+    └ None
+
+TimeoutError: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 699, in urlopen
+    httplib_response = self._make_request(
+                       │    └ <function HTTPConnectionPool._make_request at 0x0000026A8AF291F0>
+                       └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x0000026A8F286C70>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 382, in _make_request
+    self._validate_conn(conn)
+    │    │              └ <urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>
+    │    └ <function HTTPSConnectionPool._validate_conn at 0x0000026A8AF29700>
+    └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x0000026A8F286C70>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 1010, in _validate_conn
+    conn.connect()
+    │    └ <function HTTPSConnection.connect at 0x0000026A8AEF7670>
+    └ <urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connection.py", line 353, in connect
+    conn = self._new_conn()
+           │    └ <function HTTPConnection._new_conn at 0x0000026A8AEF70D0>
+           └ <urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connection.py", line 181, in _new_conn
+    raise NewConnectionError(
+          └ <class 'urllib3.exceptions.NewConnectionError'>
+
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>: Failed to establish a new connection: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\adapters.py", line 439, in send
+    resp = conn.urlopen(
+           │    └ <function HTTPConnectionPool.urlopen at 0x0000026A8AF29430>
+           └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x0000026A8F286C70>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\connectionpool.py", line 755, in urlopen
+    retries = retries.increment(
+              │       └ <function Retry.increment at 0x0000026A8AED15E0>
+              └ Retry(total=0, connect=None, read=False, redirect=None, status=None)
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\urllib3\util\retry.py", line 573, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+          │             │      │    │        │             └ 'unknown'
+          │             │      │    │        └ <class 'urllib3.exceptions.ResponseError'>
+          │             │      │    └ NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>: Failed to establish a new connection: ...
+          │             │      └ '//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=143683&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml'
+          │             └ <urllib3.connectionpool.HTTPSConnectionPool object at 0x0000026A8F286C70>
+          └ <class 'urllib3.exceptions.MaxRetryError'>
+
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=143683&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>: Failed to establish a new connection: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'))
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 27, in simple_get
+    with closing(get(url, stream=True)) as resp:
+         │       │   └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+         │       └ <function get at 0x0000026A8B03C040>
+         └ <class 'contextlib.closing'>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+           │              │           │         └ {'stream': True, 'allow_redirects': True}
+           │              │           └ None
+           │              └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+           └ <function request at 0x0000026A8AFEEC10>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+           │       │              │           │      └ {'params': None, 'stream': True, 'allow_redirects': True}
+           │       │              │           └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+           │       │              └ 'get'
+           │       └ <function Session.request at 0x0000026A8B03A790>
+           └ <requests.sessions.Session object at 0x0000026A8DE98520>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+           │    │    │       └ {'timeout': None, 'allow_redirects': True, 'verify': True, 'proxies': OrderedDict(), 'stream': True, 'cert': None}
+           │    │    └ <PreparedRequest [GET]>
+           │    └ <function Session.send at 0x0000026A8B03AC10>
+           └ <requests.sessions.Session object at 0x0000026A8DE98520>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+        │       │    │          └ {'timeout': None, 'verify': True, 'proxies': OrderedDict(), 'stream': True, 'cert': None}
+        │       │    └ <PreparedRequest [GET]>
+        │       └ <function HTTPAdapter.send at 0x0000026A8B03A0D0>
+        └ <requests.adapters.HTTPAdapter object at 0x0000026A8F286F40>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\requests\adapters.py", line 516, in send
+    raise ConnectionError(e, request=request)
+          │                          └ <PreparedRequest [GET]>
+          └ <class 'requests.exceptions.ConnectionError'>
+
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=143683&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>: Failed to establish a new connection: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'))
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 375, in <module>
+    Main()
+    └ <function Main at 0x0000026A8B06C0D0>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 221, in Main
+    webdata = get_NWS_web_data(point, cache=True)
+              │                └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+              └ <function get_NWS_web_data at 0x0000026A8B068670>
+
+  File "d:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\OHIO_RIVER_LEVEL_SCRAPING.py", line 151, in get_NWS_web_data
+    clean_soup = ws.retrieve_cleaned_html(site, cache)
+                 │  │                     │     └ True
+                 │  │                     └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+                 │  └ <function retrieve_cleaned_html at 0x0000026A8B03B940>
+                 └ <module 'cfsiv_utils.WebScraping' from 'D:\\Users\\Conrad\\Documents\\GitHub\\Sunset-Village-River-Bot\\venv\\lib\\site-packa...
+
+> File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 81, in retrieve_cleaned_html
+    raw_resp = simple_get(url)
+               │          └ 'https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]...
+               └ <function simple_get at 0x0000026A8B05EB80>
+
+  File "D:\Users\Conrad\Documents\GitHub\Sunset-Village-River-Bot\venv\lib\site-packages\cfsiv_utils\WebScraping.py", line 35, in simple_get
+    raise Warning(f'{str(e)}')
+
+Warning: HTTPSConnectionPool(host='water.weather.gov', port=443): Max retries exceeded with url: //ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt%5B%5D=143683&allpoints=150960&data%5B%5D=obs&data%5B%5D=xml (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000026A8D295100>: Failed to establish a new connection: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'))
+2022-08-02 07:10:51.706 | DEBUG    | __main__:get_NWS_web_data:153 - Error retreiving web data for: https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]=xml
+2022-08-02 07:10:51.706 | DEBUG    | __main__:Main:242 - Error while scraping point: https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]=xml
+2022-08-02 07:10:51.706 | DEBUG    | __main__:Main:243 - No data collected for: https://water.weather.gov//ahps2/river.php?wfo=lmk&wfoid=18699&riverid=204624&pt[]=143683&allpoints=150960&data[]=obs&data[]=xml
